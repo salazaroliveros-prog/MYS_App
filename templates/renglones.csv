@@ -1,0 +1,8 @@
+project_id,index,nombre,unidad,cantidad,precio,subtotal
+PROY-1674000000,0,"Limpieza y Descapote",m2,120,15,1800
+PROY-1674000000,1,"Trazo y Niveles",m2,120,18,2160
+PROY-1674000000,2,"Levantado Muros Block (14cm)",m2,100,155,15500
+PROY-1674001000,0,"Movimiento de Tierras Masivo",m3,200,85,17000
+PROY-1674001000,1,"Techo Lámina TR-4",m2,850,180,153000
+PROY-1674002000,0,"Estructura Metálica H",ton,10,2500,25000
+PROY-1674002000,1,"Piso Industrial (Endurecido)",m2,2400,210,504000

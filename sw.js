@@ -1,13 +1,13 @@
 const CACHE_NAME = 'wm-manager-v2';
 const PRECACHE_URLS = [
   './',
-  './inicio.html',
   './index.html',
   './calculadora.html',
   './visita_campo.html',
   './proyectos.html',
   './app.js',
   './logo.png',
+  './header-logo.png',
   './manifest.json',
   './sw.js',
   './apple-touch-icon.png',
@@ -57,8 +57,11 @@ self.addEventListener('fetch', event => {
       });
       return networkResp;
     }).catch(() => {
-      // If request is an image and offline, try logo.png
-      if (event.request.destination === 'image') return caches.match('./logo.png');
+        // If request is an image and offline, try header-logo then logo
+        if (event.request.destination === 'image') {
+          return caches.match('./header-logo.png')
+            .then(r=> r || caches.match('./logo.png'));
+        }
       return new Response('Offline', { status: 503, statusText: 'Offline' });
     }))
   );

@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="css/common-responsive.css">
     <style>
         /* Paleta de Colores SOFTCON-WM */
         :root {
@@ -42,6 +43,8 @@
         }
         header img {
             height: 60px; /* Ajusta el tamaño de tu logo */
+            max-width:100%;
+            width:auto;
             margin-right: 15px;
         }
         header h1 {
@@ -226,6 +229,33 @@
         tr:hover .input-editable {
             border-color: var(--color-principal);
         }
+
+        /* Additional mobile fine-tuning */
+        @media (max-width: 360px) {
+            header { padding: 0.8rem 0.6rem; }
+            header img { height: 36px; margin-right: 8px; }
+            header h1 { font-size: 1.25rem; }
+            header p { font-size: 0.75rem; }
+            .nav-bar { padding: 6px; gap:6px; }
+            .nav-bar button { padding: 8px; font-size: 0.85rem; }
+            .grid-calc { gap: 12px; }
+            .grid-calc div label { font-size: 0.9em; }
+            .form-input { padding: 10px; }
+            .card { padding: 12px; }
+            th, td { font-size: 0.82rem; padding: 8px; }
+            .mat-item span { font-size: 1.15em; }
+        }
+
+        @media (max-width: 320px) {
+            header h1 { font-size: 1.05rem; }
+            .nav-bar { gap:4px; }
+            .nav-bar button { padding: 6px; font-size: 0.8rem; }
+            .grid-calc { grid-template-columns: 1fr; gap:10px; }
+            .logistica-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+            /* Allow table container to scroll horizontally on very small screens */
+            .card[style*="overflow-x: auto"] { -webkit-overflow-scrolling: touch; }
+            #tablaPresupuesto { min-width: 760px; }
+        }
     </style>
 </head>
 <body>
@@ -238,19 +268,30 @@
 
     <!-- seccionMateriales moved to main container for better layout -->
     </div>
+    <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+        <div class="wm-tooltip">
+            <button id="globalCompactBtnCalc" class="compact-toggle-global" onclick="syncCompactGlobal()">🌐 Compacta Global</button>
+            <div class="wm-tooltip-text">Sincroniza la vista compacta en todas las páginas. Oculta columnas menos relevantes y mejora legibilidad en móviles.</div>
+        </div>
+        <div class="wm-tooltip">
+            <button id="configCompactCalc" class="compact-toggle-global" onclick="openCompactConfig()">⚙️ Config</button>
+            <div class="wm-tooltip-text">Configurar qué columnas se ocultan en la Vista Compacta para esta página.</div>
+        </div>
+    </div>
 </header>
  
-<div style="display: flex; gap: 10px; padding: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-    <button onclick="location.href='inicio.html'" style="background: var(--p); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">
+    <div style="display: flex; gap: 10px; padding: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <button onclick="location.href='index.html'" style="background: var(--p); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">
         <i class="fas fa-home"></i> INICIO (Finanzas)
     </button>
     <button onclick="location.href='proyectos.html'" style="background: var(--p); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">
         <i class="fas fa-folder"></i> HISTORIAL
     </button>
+    <button id="compactToggle" class="compact-toggle" onclick="toggleCompactView()" title="Vista compacta">🗂️ Vista Compacta</button>
 </div>
 
-<div class="nav-bar">
-    <button onclick="window.location.href='inicio.html'">🏠 Inicio</button>
+    <div class="nav-bar">
+    <button onclick="window.location.href='index.html'">🏠 Inicio</button>
     <button onclick="window.location.href='proyectos.html'">📂 Proyectos</button>
         <button onclick="window.location.href='guia.html'">📘 Guía Acabados 2026</button>
         <button onclick="window.location.href='orden_compra_tecnica.html'">🧾 Orden Compra</button>
@@ -314,23 +355,10 @@
                     <option value="publica">Obra Pública</option>
                 </select>
             </div>
+            <!-- Los tipos de losa y techo se obtienen desde `visita_campo` y no se solicitan aquí para evitar duplicación -->
             <div>
-                <label for="tipoLosa">Tipo de Losa:</label><br>
-                <select id="tipoLosa" onchange="cargarRenglones()" title="Tipo de Losa">
-                    <option value="losa_vigueta_bovedilla">Vigueta / Bovedilla</option>
-                    <option value="losa_maciza">Losa Maciza</option>
-                    <option value="losa_prefabricada">Losa Prefabricada</option>
-                </select>
-            </div>
-            <div>
-                <label for="tipoTecho">Tipo de Techo:</label><br>
-                <select id="tipoTecho" onchange="cargarRenglones()" title="Tipo de Techo">
-                    <option value="lamina_aluzinc">Lámina Aluzinc</option>
-                    <option value="estructura_metalica">Estructura Metálica</option>
-                    <option value="pergola_madera">Pérgola Madera</option>
-                    <option value="pergola_metal">Pérgola Metal</option>
-                    <option value="teja_barro">Teja de Barro</option>
-                </select>
+                <label for="cubiertaProyecto">Cubierta (Visita Campo):</label><br>
+                <input type="text" id="cubiertaProyecto" placeholder="(se completa al abrir proyecto)" readonly style="background:#f3f3f3;" title="Tipo de cubierta capturado en Visita Campo">
             </div>
             <div>
                 <label for="cantidadGlobal">Área a Construir ($m^2$):</label><br>
@@ -427,6 +455,8 @@
 </div>
 
 <script>
+        // load shared script for global sync
+        (function(){ var s=document.createElement('script'); s.src='js/common-responsive.js'; document.head.appendChild(s); })();
     // BASE DE DATOS DE RENGLONES Y PARÁMETROS
     const baseDatos = {
         residencial: [
@@ -603,7 +633,7 @@
             { n: "Centros Deportivos (Basico)", u: "m2", c: 1.0, p: 700, m: "Grama sintetica, pistas", r: "50 m²/día" },
             { n: "Mejoramiento de Plazas y Parques", u: "m2", c: 0.5, p: 120, m: "Pavimentos, jardineria", r: "200 m²/día" },
             { n: "Obras de Protección Social (Refugios)", u: "m2", c: 1.0, p: 620, m: "Estructura basica, cubiertas", r: "20 m²/día" },
-            { n: "Redes de Desagüe Pluvial", u: "ml", c: 0.6, p: 140, m: "Tuberia, rejillas", r: "80 ml/día" },
+            { n: "Redes de Desagüe Pluvial", u: "ml", c: 0.6, p: 140, m: "Tubería, rejillas", r: "80 ml/día" },
             { n: "Mejoramiento de Centros Culturales", u: "m2", c: 1.0, p: 780, m: "Acabados, iluminacion", r: "30 m²/día" },
             { n: "Centros Tecnológicos (Modulo)", u: "m2", c: 1.0, p: 1100, m: "Instalaciones, redes", r: "25 m²/día" },
             { n: "Estaciones de Bus (Pequeñas)", u: "unid", c: 0.02, p: 4200, m: "Estructura, cubierta", r: "Global" },
@@ -688,6 +718,36 @@
         }
     })();
 
+    /* Utilidades de formateo y animación (moneda Q) */
+    function formatCurrency(value, decimals = 2) {
+        const num = Number(value) || 0;
+        try {
+            return 'Q ' + num.toLocaleString('es-GT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        } catch (e) {
+            return 'Q ' + num.toFixed(decimals);
+        }
+    }
+
+    function parseCurrency(str) {
+        if (str === null || str === undefined) return NaN;
+        let s = String(str).trim();
+        s = s.replace(/Q|\s|\u00A0/g, '');
+        s = s.replace(/[^0-9.,-]/g, '');
+        if (s.indexOf('.') !== -1 && s.indexOf(',') !== -1) {
+            s = s.replace(/\./g, '').replace(/,/g, '.');
+        } else if (s.indexOf(',') !== -1 && s.indexOf('.') === -1) {
+            s = s.replace(/,/g, '.');
+        }
+        const n = Number(s);
+        return isNaN(n) ? NaN : n;
+    }
+
+    function animateValueChange(el) {
+        if (!el) return;
+        el.classList.add('value-change');
+        setTimeout(() => el.classList.remove('value-change'), 450);
+    }
+
     function cargarRenglones() {
         const tipo = document.getElementById('tipoObra').value;
         const global = parseFloat(document.getElementById('cantidadGlobal').value) || 0;
@@ -720,7 +780,7 @@
                            value="${(item.p || 0)}"
                            oninput="recalcularFila(${index})">
                 </td>
-                <td id="subtotal-${index}" class="subtotal-celda" data-value="${parseFloat(subtotalInicial)}">Q ${Number(subtotalInicial).toLocaleString()}</td>
+                <td id="subtotal-${index}" class="subtotal-celda" data-value="${parseFloat(subtotalInicial)}">${formatCurrency(parseFloat(subtotalInicial),2)}</td>
                 <td><small>${item.m || ''}</small></td>
             </tr>
             `;
@@ -746,7 +806,7 @@
                     <td>
                         <input type="number" step="0.01" class="input-editable" id="precio-${cid}" value="${(it.precio || 0)}" oninput="recalcularFila('${cid}')">
                     </td>
-                    <td id="subtotal-${cid}" class="subtotal-celda" data-value="${parseFloat(subtotalInicial)}">Q ${Number(subtotalInicial).toLocaleString()}</td>
+                    <td id="subtotal-${cid}" class="subtotal-celda" data-value="${parseFloat(subtotalInicial)}">${formatCurrency(parseFloat(subtotalInicial),2)}</td>
                     <td><small>${it.m || ''} <button onclick="removeCustomRenglon('${tipo}', ${ci})" style="margin-left:8px;background:#dc3545;color:#fff;border:none;border-radius:4px;padding:4px 6px;">Eliminar</button></small></td>
                 </tr>
                 `;
@@ -766,7 +826,8 @@
             const celda = document.getElementById(`subtotal-${index}`);
             if (celda) {
                 celda.dataset.value = subtotal;
-                celda.innerText = `Q ${subtotal.toLocaleString()}`;
+                celda.innerText = formatCurrency(subtotal,2);
+                animateValueChange(celda);
             }
         } catch (e) { console.warn('recalcularFila error:', e); }
         actualizarGranTotal();
@@ -809,6 +870,28 @@
     // Exponer funciones globales para inputs inline
     window.recalcularFila = recalcularFila;
     window.actualizarGranTotal = actualizarGranTotal;
+
+    // Calcula y actualiza los Totales financieros (usa el total directo en Q)
+    function actualizarTotales(totalDirecto) {
+        totalDirecto = Number(totalDirecto) || 0;
+        const costoIndirecto = totalDirecto * 0.15; // 15%
+        const costoImprevisto = totalDirecto * 0.05; // 5%
+        const costoUtilidad = (totalDirecto + costoIndirecto + costoImprevisto) * 0.12; // 12%
+        const precioVentaTotal = totalDirecto + costoIndirecto + costoImprevisto + costoUtilidad;
+
+        const elTotal = document.getElementById('totalCostoDirecto');
+        const elIndirecto = document.getElementById('costoIndirecto');
+        const elImprev = document.getElementById('costoImprevisto');
+        const elUtil = document.getElementById('costoUtilidad');
+        const elPrecio = document.getElementById('precioVentaTotal');
+
+        if (elTotal) { elTotal.innerText = formatCurrency(totalDirecto,2); animateValueChange(elTotal); }
+        if (elIndirecto) { elIndirecto.innerText = formatCurrency(costoIndirecto,2); animateValueChange(elIndirecto); }
+        if (elImprev) { elImprev.innerText = formatCurrency(costoImprevisto,2); animateValueChange(elImprev); }
+        if (elUtil) { elUtil.innerText = formatCurrency(costoUtilidad,2); animateValueChange(elUtil); }
+        if (elPrecio) { elPrecio.innerText = formatCurrency(precioVentaTotal,2); animateValueChange(elPrecio); }
+    }
+    window.actualizarTotales = actualizarTotales;
 
     function calcularTodo() {
         const tipo = document.getElementById('tipoObra').value;
@@ -951,8 +1034,14 @@
             document.getElementById('nombreProyecto').value = proyecto.nombre || '';
             if (proyecto.tipo) document.getElementById('tipoObra').value = proyecto.tipo;
             if (proyecto.m2) document.getElementById('cantidadGlobal').value = proyecto.m2;
+            try {
+                const cubEl = document.getElementById('cubiertaProyecto');
+                if (cubEl) cubEl.value = proyecto.cubierta || proyecto.tipo_cubierta || proyecto.tipo || '';
+            } catch(e) { /* ignore */ }
             // Rebuild table from base and then apply overrides
             cargarRenglones();
+            // Aplicar parámetros regionales si existen en WM_PROJECTS_DB o wm_proyectos
+            try { applyParamsToTable(proyecto); } catch(e){ /* ignore */ }
             if (Array.isArray(proyecto.renglones)) {
                 proyecto.renglones.forEach(r => {
                     const idx = r.index;
@@ -967,6 +1056,69 @@
             // Recalcular totales
             actualizarGranTotal();
         } catch (e) { console.warn('cargarProyectoEnUI error:', e); }
+    }
+
+    // Aplica parámetros (baseCostPerM2, roofMultiplier) a la tabla de renglones escalando precios unitarios
+    function applyParamsToTable(projecto) {
+        try {
+            const name = (projecto.nombre || projecto.proyecto || '').toString();
+            if (!name) return;
+            // buscar params en WM_PROJECTS_DB, wm_proyectos o proyectos
+            const dbA = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || '[]');
+            const dbB = JSON.parse(localStorage.getItem('wm_proyectos') || '[]');
+            const dbC = JSON.parse(localStorage.getItem('proyectos') || '[]');
+            let found = dbA.find(p => (p && ((p.proyecto || p.id || '') === name || (projecto.id && p.id === projecto.id)))) ||
+                        dbB.find(p => (p && ((p.nombre || p.proyecto || '') === name || (projecto.id && p.id === projecto.id)))) ||
+                        dbC.find(p => (p && ((p.nombre || p.proyecto || '') === name || (projecto.id && p.id === projecto.id))));
+            if (!found) return;
+            const params = found.params || (found.params === undefined ? (JSON.parse(localStorage.getItem('WM_PARAMS_DB')||'{}')[found.departamento] || null) : null);
+            if (!params) return;
+
+            const area = parseFloat(document.getElementById('cantidadGlobal').value) || 0;
+
+            // Cubierta (fuente: proyecto/visita_campo) — coincide con keys de WM_PARAMS_DB
+            let cubiertaKey = (
+                (projecto && (projecto.cubierta || projecto.tipo_cubierta || '')) ||
+                (found && (found.cubierta || found.tipo_cubierta || found.tipo || '')) ||
+                ''
+            ).toString().toUpperCase().trim();
+
+            // Normalizar a las claves esperadas por DEFAULT_PARAMS
+            if (cubiertaKey && params.roofMultiplier && !params.roofMultiplier[cubiertaKey]) {
+                if (cubiertaKey.includes('PREFAB')) cubiertaKey = 'LOSA PREFABRICADA';
+                else if (cubiertaKey.includes('MACIZ') || cubiertaKey.includes('SOLID') || cubiertaKey.includes('SOLIDA') || cubiertaKey.includes('SÓL') || cubiertaKey.includes('SOL')) cubiertaKey = 'LOSA SOLIDA';
+                else if (cubiertaKey.includes('ESTRUCT')) cubiertaKey = 'ESTRUCTURA METALICA';
+                else if (cubiertaKey.includes('PERGOLA')) cubiertaKey = 'PERGOLA';
+                else if (cubiertaKey.includes('TEJA')) cubiertaKey = 'TEJA';
+            }
+
+            // calcular total directo actual desde baseDatos
+            let totalDirectoActual = 0;
+            try {
+                const tipoKey = document.getElementById('tipoObra').value;
+                if (baseDatos[tipoKey]) {
+                    baseDatos[tipoKey].forEach(item => { totalDirectoActual += (item.c * area) * (item.p || 0); });
+                }
+            } catch(e) { console.warn('calc total directo error', e); }
+
+            const base = Number(params.baseCostPerM2) || 0;
+            const roofMult = (params.roofMultiplier && cubiertaKey && params.roofMultiplier[cubiertaKey]) ? Number(params.roofMultiplier[cubiertaKey]) : 1;
+            const desiredTotalDirect = base * roofMult * area;
+            if (!totalDirectoActual || desiredTotalDirect <= 0) return;
+            const factor = desiredTotalDirect / totalDirectoActual;
+
+            // Escalar precios en la tabla
+            document.querySelectorAll('#cuerpoTabla tr').forEach(tr => {
+                const idx = tr.id ? tr.id.replace('fila-','') : '';
+                const precioInput = tr.querySelector(`#precio-${idx}`);
+                if (precioInput) {
+                    const orig = parseFloat(precioInput.value) || 0;
+                    precioInput.value = (orig * factor).toFixed(2);
+                    try { recalcularFila(idx); } catch(e){}
+                }
+            });
+            wmToast('Se aplicaron parámetros regionales y se escalaron precios.');
+        } catch (e) { console.warn('applyParamsToTable error', e); }
     }
 
     window.cargarProyectoEnUI = cargarProyectoEnUI;
@@ -1149,6 +1301,49 @@
         }
     }
 
+    // Toggle compact view for table (persists choice)
+    function toggleCompactView() {
+        const tbl = document.getElementById('tablaPresupuesto');
+        const btn = document.getElementById('compactToggle');
+        if (!tbl) return;
+        tbl.classList.toggle('compact-view');
+        if (btn) btn.classList.toggle('active');
+        try { localStorage.setItem('calc_compact_view', tbl.classList.contains('compact-view') ? '1' : '0'); } catch(e) {}
+    }
+
+    // Apply persisted compact view on load
+    try {
+        if (localStorage.getItem('calc_compact_view') === '1') {
+            const t = document.getElementById('tablaPresupuesto');
+            const b = document.getElementById('compactToggle');
+            if (t) t.classList.add('compact-view');
+            if (b) b.classList.add('active');
+        }
+    } catch(e) {}
+
+    // Observe newly added tables and apply compact-view if user preference is set
+    (function observeTablesForCompactCalc(){
+        try{
+            const enabled = localStorage.getItem('calc_compact_view') === '1';
+            if (!enabled) return;
+            const applyToNode = (node) => {
+                if (!node) return;
+                if (node.tagName === 'TABLE') node.classList.add('compact-view');
+                if (node.querySelectorAll) {
+                    node.querySelectorAll('table').forEach(t=>t.classList.add('compact-view'));
+                }
+            };
+            // apply to existing
+            document.querySelectorAll('table').forEach(t=>t.classList.add('compact-view'));
+            const mo = new MutationObserver(muts=>{
+                muts.forEach(m=>{
+                    m.addedNodes && m.addedNodes.forEach(n=>{ if (n.nodeType===1) applyToNode(n); });
+                });
+            });
+            mo.observe(document.body, { childList: true, subtree: true });
+        } catch(e) { /* ignore */ }
+    })();
+
     // FUNCIÓN PARA IMPORTAR Y SINCRONIZAR
     function importarCSV(input) {
         const file = input.files[0];
@@ -1277,8 +1472,13 @@
                             try { full = (JSON.parse(localStorage.getItem('proyectos')||'[]')).find(x => x.nombre === (op.proyecto || op.nombre)); } catch(e){}
                             if (full && typeof window.cargarProyectoEnUI === 'function') window.cargarProyectoEnUI(full);
                             else if (typeof window.cargarProyectoEnUI === 'function') {
-                                // apply basic fields
-                                window.cargarProyectoEnUI({ nombre: op.proyecto || op.nombre || '', tipo: op.tipo || '', m2: op.ac || op.m2 || '' });
+                                // apply basic fields (no confundir cubierta con tipología)
+                                window.cargarProyectoEnUI({
+                                    nombre: op.proyecto || op.nombre || '',
+                                    tipo: op.tipoObra || op.tipologia || '',
+                                    m2: op.ac || op.m2 || '',
+                                    cubierta: op.cubierta || op.tipo || ''
+                                });
                             }
                         }
                         localStorage.removeItem('WM_OPEN_PROJECT');
@@ -1304,19 +1504,86 @@
         const sel = document.getElementById('calcProjectSelect');
         if (!sel) return;
         sel.innerHTML = '<option value="">-- Seleccione --</option>' + final.map(p=>`<option value="${p.nombre}">${p.nombre}${p.m2? ' - '+p.m2+' m²':''}</option>`).join('');
+
+        // Auto-abrir al seleccionar (evita clic extra)
+        try {
+            if (!sel.dataset.wmBound) {
+                sel.addEventListener('change', () => {
+                    if (sel.value) openSelectedProjectInUI();
+                });
+                sel.dataset.wmBound = '1';
+            }
+        } catch(e) { /* ignore */ }
+    }
+
+    function findProjectAny(name){
+        if (!name) return null;
+        // Preferir WM_PROJECTS_DB (visita_campo)
+        const dbA = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || '[]');
+        const a = (dbA||[]).find(x => x && ((x.proyecto || x.id || '') == name));
+        if (a) {
+            return {
+                source: 'WM_PROJECTS_DB',
+                raw: a,
+                ui: {
+                    nombre: a.proyecto || a.id || name,
+                    tipo: a.tipoObra || a.tipologia || '',
+                    m2: a.ac || a.m2 || '',
+                    cubierta: a.cubierta || a.tipo || a.tipo_cubierta || '',
+                    renglones: a.renglones || undefined
+                }
+            };
+        }
+
+        const dbB = JSON.parse(localStorage.getItem('wm_proyectos') || '[]');
+        const b = (dbB||[]).find(x => x && ((x.nombre || x.proyecto || x.id || '') == name));
+        if (b) {
+            return {
+                source: 'wm_proyectos',
+                raw: b,
+                ui: {
+                    nombre: b.nombre || b.proyecto || name,
+                    tipo: b.tipo || '',
+                    m2: b.m2 || b.ac || b.totalNumber || '',
+                    cubierta: b.cubierta || b.tipo || '',
+                    renglones: b.renglones || undefined
+                }
+            };
+        }
+
+        const dbC = JSON.parse(localStorage.getItem('proyectos') || '[]');
+        const c = (dbC||[]).find(x => x && ((x.nombre || x.proyecto || x.id || '') == name));
+        if (c) {
+            return {
+                source: 'proyectos',
+                raw: c,
+                ui: {
+                    nombre: c.nombre || c.proyecto || name,
+                    tipo: c.tipo || '',
+                    m2: c.m2 || c.ac || '',
+                    cubierta: c.cubierta || c.tipo || '',
+                    renglones: c.renglones || undefined
+                }
+            };
+        }
+
+        return null;
     }
 
     function injectSelectedProjectM2(){
         const sel = document.getElementById('calcProjectSelect');
         if (!sel || !sel.value) { wmToast('Seleccione un proyecto'); return; }
         const name = sel.value;
-        // try find in WM_PROJECTS_DB
-        let p = (JSON.parse(localStorage.getItem('WM_PROJECTS_DB')||'[]')).find(x=> (x.proyecto||x.id) == name || x.proyecto == name);
-        if (!p) p = (JSON.parse(localStorage.getItem('wm_proyectos')||'[]')).find(x=> x.nombre == name || x.proyecto == name);
-        if (!p) p = (JSON.parse(localStorage.getItem('proyectos')||'[]')).find(x=> x.nombre == name || x.proyecto == name);
-        if (!p) { wmToast('No se encontró información del proyecto seleccionado'); return; }
+        const found = findProjectAny(name);
+        if (!found) { wmToast('No se encontró información del proyecto seleccionado'); return; }
+        const p = found.raw || {};
         if (p.ac || p.m2) document.getElementById('cantidadGlobal').value = p.ac || p.m2;
         if (p.proyecto || p.nombre) document.getElementById('nombreProyecto').value = p.proyecto || p.nombre;
+        try {
+            const cubEl = document.getElementById('cubiertaProyecto');
+            if (cubEl) cubEl.value = p.cubierta || p.tipo || '';
+        } catch(e) {}
+        try { localStorage.setItem('WM_OPEN_PROJECT', JSON.stringify(Object.assign({ proyecto: (p.proyecto || p.nombre || name) }, p))); } catch(e) {}
         cargarRenglones();
     }
 
@@ -1324,14 +1591,18 @@
         const sel = document.getElementById('calcProjectSelect');
         if (!sel || !sel.value) { wmToast('Seleccione un proyecto'); return; }
         const name = sel.value;
-        let full = (JSON.parse(localStorage.getItem('proyectos')||'[]')).find(x=> x.nombre === name || x.id == name);
-        if (!full) {
-            // try wm_proyectos
-            const wm = JSON.parse(localStorage.getItem('wm_proyectos')||'[]').find(x=> x.nombre === name || x.proyecto === name);
-            if (wm) full = { nombre: wm.nombre || wm.proyecto, tipo: wm.tipo || '', m2: wm.m2 || wm.ac || wm.totalNumber || '' };
+        const found = findProjectAny(name);
+        if (!found) { wmToast('No hay datos para abrir este proyecto en la calculadora'); return; }
+
+        // Persistir WM_OPEN_PROJECT para que app.js resuelva cubierta/losa/techo en explosión
+        try { localStorage.setItem('WM_OPEN_PROJECT', JSON.stringify(Object.assign({ proyecto: found.ui.nombre }, found.raw || {}))); } catch(e) {}
+
+        // Cargar en UI y recalcular
+        if (typeof window.cargarProyectoEnUI === 'function') {
+            window.cargarProyectoEnUI(found.ui);
+        } else {
+            wmToast('No está disponible cargarProyectoEnUI');
         }
-        if (full && typeof window.cargarProyectoEnUI === 'function') window.cargarProyectoEnUI(full);
-        else wmToast('No hay datos completos para abrir este proyecto en la calculadora');
     }
 </script>
 <script>

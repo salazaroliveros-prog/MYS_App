@@ -1,0 +1,38 @@
+PRIMERA: OBJETO DEL CONTRATO
+EL CONTRATISTA se obliga a ejecutar para EL PROPIETARIO la construcción de obra gris de una vivienda de [Insertar m²] metros cuadrados, ubicada en: [Dirección Exacta del Proyecto].
+
+SEGUNDA: ALCANCE DE LA OBRA GRIS
+La fase de Obra Gris comprende los siguientes renglones (según cronograma técnico):
+
+Preliminares: Trazo, niveles, excavación y cimentación reforzada.
+
+Estructura: Levantado de muros con block de 14x19x39 (clase 35kg), columnas, soleras de amarre e intermedias.
+
+Instalaciones Ocultas: Ductería eléctrica, red de drenajes PVC y red de agua potable (CPVC/HG).
+
+Entrepiso/Techado: Fundición de losa (vigueta y bovedilla) con capa de compresión de concreto 3000 PSI.
+
+TERCERA: VALOR DEL CONTRATO Y FORMA DE PAGO
+El valor total de la obra es de Q [Insertar Total Calculado] (Quetzales Exactos). La forma de pago se estipula de la siguiente manera:
+
+Anticipo (40%): Q [Monto] para movilización y compra de materiales base (hierro y block).
+
+Estimación 1 (20%): Al finalizar cimentación y sobrecimiento.
+
+Estimación 2 (20%): Al finalizar levantado de muros a nivel de solera de corona.
+
+Estimación 3 (15%): Al finalizar la fundición de losa.
+
+Finiquito (5%): A la entrega de la obra gris y retiro de ripio.
+
+CUARTA: CLÁUSULA DE SALVAGUARDA (AJUSTE DE PRECIOS 2026)
+Debido a la volatilidad del mercado en Guatemala, ambas partes acuerdan que si el precio de los insumos críticos (Hierro y Cemento) sufre un incremento mayor al 5% respecto a la fecha de firma, EL CONTRATISTA presentará las facturas de compra y el excedente será cubierto por EL PROPIETARIO como costo reembolsable.
+
+QUINTA: PLAZO DE ENTREGA
+EL CONTRATISTA se compromete a entregar la obra en un plazo de [Insertar Semanas] semanas calendario, contadas a partir de la recepción del anticipo y la disponibilidad del terreno.
+
+SEXTA: GARANTÍA Y SUPERVISIÓN
+SOFTCON-MYS-CONSTRU-WM garantiza la estabilidad estructural de la obra por un periodo de [Insertar años, ej. 5 años] contra vicios ocultos, siempre que no existan modificaciones estructurales por terceros.
+
+🛡️ Recomendación de Cierre para tu Empresa:
+Al entregar este contrato, adjunta siempre el Cronograma de Insumos que generamos anteriormente. Esto le da transparencia a tu cliente y demuestra que SOFTCON-MYS-CONSTRU-WM no solo construye, sino que aplica ingeniería de costos real.

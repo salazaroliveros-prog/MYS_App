@@ -21,7 +21,7 @@
 <body>
   <header>
     <div style="max-width:980px;margin:auto;display:flex;align-items:center;gap:12px;">
-      <img src="logo.png.png" alt="logo" style="height:44px;object-fit:contain">
+      <img src="logo.png" alt="Logo CONSTRUCTORA WM/M&S" style="height:44px;max-width:100%;width:auto;object-fit:contain">
       <div>
         <h1>Guía de Selección de Acabados — Tendencia 2026</h1>
         <div style="font-size:0.95rem;opacity:0.9">SOFTCON-MYS-CONSTRU-WM — CONSTRUYENDO TU FUTURO</div>
@@ -79,6 +79,14 @@
 
   <script>
     // intención: nada necesario aquí por ahora
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try { await navigator.serviceWorker.register('./sw.js'); console.info('Service Worker registrado (guia)'); }
+        catch(e){ console.warn('SW registration failed (guia):', e); }
+      });
+    }
   </script>
 </body>
 </html>

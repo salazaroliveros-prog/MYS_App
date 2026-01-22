@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Orden de Compra Técnica — WM</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#00447C">
   <style>
     body{font-family:Segoe UI,Arial,sans-serif;color:#222;margin:0;background:#f4f6f8}
     .wrap{max-width:1000px;margin:22px auto;background:#fff;padding:18px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
@@ -29,7 +32,7 @@
 <body>
   <div class="wrap">
     <header>
-      <img src="logo.png.png" alt="Logo">
+      <img src="logo.png" alt="Logo CONSTRUCTORA WM/M&S" style="height:56px;max-width:100%;width:auto;object-fit:contain">
       <div>
         <h1>ORDEN DE COMPRA TÉCNICA — WM PRO</h1>
         <div style="color:#666;font-size:0.95rem">EMPRESA: SOFTCON-MYS-CONSTRU-WM — "CONSTRUYENDO TU FUTURO"</div>
@@ -213,6 +216,14 @@
         localStorage.setItem('oc_history', JSON.stringify(historial));
         wmToast('Orden guardada en historial (oc_history). El PDF (si fue generado) se almacena junto al registro.');
       }catch(e){ console.warn('saveOrderToHistory error', e); wmToast('No fue posible guardar la orden.'); }
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try { await navigator.serviceWorker.register('./sw.js'); console.info('Service Worker registrado (orden_compra_tecnica)'); }
+        catch(e){ console.warn('SW registration failed (orden_compra_tecnica):', e); }
+      });
     }
   </script>
 </body>

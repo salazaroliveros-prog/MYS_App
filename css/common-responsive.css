@@ -1,0 +1,76 @@
+/* Common responsive helpers for WM app */
+:root {
+  --wm-accent: #00447C;
+  --wm-mustard: #FFB300;
+}
+html,body{box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.container{max-width:1200px;margin:0 auto;padding:0 12px}
+
+/* Toggle button for compact view */
+.compact-toggle{background:var(--wm-accent);color:#fff;border:none;padding:8px 10px;border-radius:6px;cursor:pointer;font-weight:700}
+.compact-toggle.active{background:#022f4f;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+
+/* Compact table: hide less important columns (adjust indices per table structure) */
+table.compact-view td:nth-child(3), table.compact-view th:nth-child(3),
+table.compact-view td:nth-child(7), table.compact-view th:nth-child(7) { display:none; }
+
+/* Responsive helpers */
+.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hide-mobile{display:inline}
+
+@media (max-width: 760px) {
+  .hide-mobile{display:none !important}
+  .stack-mobile{display:block;width:100%}
+  table.compact-view{min-width:540px}
+}
+
+@media (max-width: 420px) {
+  /* Hide additional columns when very narrow */
+  table.compact-view td:nth-child(5), table.compact-view th:nth-child(5) { display:none; }
+  .sm-text{font-size:0.85rem}
+}
+
+/* Activation animation for compact mode */
+.compact-activation-flash {
+  animation: compactFlash 650ms ease-in-out;
+}
+@keyframes compactFlash {
+  0% { box-shadow: 0 0 0 0 rgba(0,0,0,0.0); }
+  30% { box-shadow: 0 8px 24px -6px rgba(0,68,124,0.18); }
+  100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+}
+
+.compact-toggle-global { background:#08324b;color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:700;margin-left:8px }
+.compact-toggle-global.active { background:#022f4f; transform:scale(0.98); }
+
+/* Smooth transition for tables when compact toggles */
+table { transition: box-shadow 220ms ease, transform 220ms ease, opacity 180ms ease; }
+table.compact-view { transform: translateZ(0); }
+
+/* Simple CSS tooltip */
+.wm-tooltip { position: relative; display: inline-block; }
+.wm-tooltip .wm-tooltip-text {
+  visibility: hidden;
+  width: 220px;
+  background-color: rgba(8,50,75,0.95);
+  color: #fff;
+  text-align: left;
+  border-radius: 6px;
+  padding: 8px 10px;
+  position: absolute;
+  z-index: 9999;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+.wm-tooltip:hover .wm-tooltip-text,
+.wm-tooltip:focus-within .wm-tooltip-text { visibility: visible; }
+.wm-tooltip .wm-tooltip-text::after {
+  content: '';
+  position: absolute;
+  top: 100%; left: 50%; transform: translateX(-50%);
+  border-width: 6px; border-style: solid;
+  border-color: rgba(8,50,75,0.95) transparent transparent transparent;
+}

@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>WM | Control Financiero</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="css/common-responsive.css">
     <style>
         :root { --p: #00447C; --s: #F0F4F8; --a: #FFB300; --w: #FFFFFF; --danger: #dc3545; --success: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--s); margin: 0; }
-        header { background: var(--p); color: var(--w); padding: 20px; text-align: center; border-bottom: 5px solid var(--a); }
+        header { background: var(--p); color: var(--w); padding: 20px; text-align: center; border-bottom: 5px solid var(--a); display:flex; align-items:center; gap:12px; justify-content:center; }
+        header img { height: 60px; max-width:100%; width:auto; margin-right: 12px; }
         .container { max-width: 1200px; margin: auto; padding: 20px; }
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: var(--w); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -22,160 +25,145 @@
         .hidden { display: none; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
         th, td { padding: 12px; border: 1px solid #ddd; text-align: left; font-size: 0.9em; }
-        /* Progress/dashboard styles */
-        .progress-container {
-            margin-top: 20px;
-            background: #eee;
-            border-radius: 10px;
-            height: 25px;
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-        }
-        .progress-bar {
-            height: 100%;
-            transition: width 0.5s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
+        .progress-container { margin-top: 20px; background: #eee; border-radius: 10px; height: 25px; width: 100%; overflow: hidden; position: relative; }
+        .progress-bar { height: 100%; transition: width 0.5s ease-in-out; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8em; font-weight: bold; }
         .bar-ingresos { background: var(--success); }
         .bar-gastos { background: var(--danger); margin-top: 10px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
         .stat-box { padding: 10px; border-radius: 5px; border: 1px solid #ddd; text-align: center; }
+        /* Responsive adjustments */
+        .header-actions { display:flex; gap:8px; align-items:center; }
+        @media (max-width: 640px) {
+            header { flex-direction: column; align-items: flex-start; padding: 12px; }
+            header img { height: 44px; }
+            header h1 { font-size: 1.05rem; }
+            header p { font-size: 0.75rem; }
+            .btn { padding: 8px 10px; font-size: 0.9rem; }
+            .btn-nav { padding: 10px; font-size: 0.95rem; }
+            .header-actions { width:100%; justify-content: flex-end; margin-top:8px; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            table, th, td { font-size: 0.85rem; }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <link rel="manifest" href="manifest.json">
     <script src="wm_toast.js"></script>
 </head>
-<body onload="inicializar()">
-
-<script>
-    // Registrar service worker para PWA (inicio.html será la entrada instalable)
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').then(reg => {
-            console.log('SW registrado', reg.scope);
-        }).catch(err => console.warn('SW registro fallido', err));
-    }
-</script>
-
-<header>
-    <h1>SOFTCON-MYS-CONSTRU-WM</h1>
-    <p>"CONSTRUYENDO TU FUTURO" - Panel de Control</p>
-</header>
-
-<div class="container">
-    <div id="seccionAlertas"></div>
-
-    <div class="dashboard-grid">
-        <div class="card">
-            <h3>💸 Registrar Movimiento</h3>
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <button class="btn btn-ingreso" onclick="configForm('INGRESO')"><i class="fas fa-plus-circle"></i> INGRESO</button>
-                <button class="btn btn-gasto" onclick="configForm('GASTO')"><i class="fas fa-minus-circle"></i> GASTO</button>
-            </div>
-
-            <form id="formFinanzas">
-                <input type="hidden" id="tipoMovimiento" value="INGRESO">
-                
-                <label for="selectProyecto">Seleccionar Proyecto:</label>
-                <select id="selectProyecto" required aria-label="Seleccionar Proyecto" title="Seleccionar Proyecto"></select>
-
-                <label>Categoría:</label>
-                <select id="categoria" onchange="mostrarCamposExtra()" title="Categoría">
-                    <option value="anteproyecto">Anteproyecto / Planos</option>
-                    <option value="material">Materiales</option>
-                    <option value="mano_obra">Mano de Obra</option>
-                    <option value="herramienta">Herramienta y Equipo (Renta)</option>
-                    <option value="subcontrato">Sub-Contrato</option>
-                </select>
-
-                <input type="text" id="desc" placeholder="Descripción (Ej: Pago Planos de Registro)" required>
-                
-                <div style="display:flex; gap:10px;">
-                    <input type="number" id="cant" placeholder="Cantidad" oninput="calcTotal()" required>
-                    <input type="number" id="pu" placeholder="Costo Unit." oninput="calcTotal()" required>
-                </div>
-                
-                <input type="text" id="totalMov" placeholder="Total" readonly style="background:#eee; font-weight:bold;">
-
-                <div id="extras" class="hidden">
-                    <input type="text" id="proveedor" placeholder="Proveedor / Contratista">
-                    <label>Fecha Inicio/Vence:</label>
-                    <input type="date" id="fechaFin">
-                </div>
-
-                <button type="button" class="btn btn-nav" style="background:var(--a)" onclick="guardarMovimiento()">
-                    <i class="fas fa-save"></i> GUARDAR Y SINCRONIZAR
-                </button>
-            </form>
+    <body onload="inicializar()">
+    <header>
+        <img src="logo.png" alt="Logo CONSTRUCTORA WM/M&S">
+        <div style="text-align:left;">
+            <h1 style="margin:0;">SOFTCON-MYS-CONSTRU-WM</h1>
+            <p style="margin:4px 0 0; font-style:italic; opacity:0.95;">"CONSTRUYENDO TU FUTURO" - Panel de Control</p>
         </div>
-
-        <div class="card">
-            <h3>🚀 Accesos Rápidos</h3>
-            <div style="display:flex; gap:8px; flex-direction:column;">
-                <button class="btn btn-nav" onclick="location.href='visita_campo.html'"><i class="fas fa-map-marker-alt"></i> VISITA DE CAMPO</button>
-                <button class="btn btn-nav" onclick="location.href='proyectos.html'"><i class="fas fa-folder-open"></i> PROYECTOS (Historial)</button>
-                <button class="btn btn-nav" onclick="location.href='calculadora.html'"><i class="fas fa-calculator"></i> CALCULADORA (Presupuestos)</button>
+        <div style="margin-left:12px; display:flex; gap:8px; align-items:center;">
+            <button onclick="location.href='proyectos.html'" title="Abrir Proyectos" style="background:var(--a); border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:700; color:#08121a"><i class="fas fa-folder-open"></i> Proyectos</button>
+                        <div class="wm-tooltip">
+                            <button id="compactToggleIndex" onclick="toggleCompactIndex()" title="Vista Compacta" style="background:var(--p); color:#fff; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:700;">🗂️ Compacta</button>
+                            <div class="wm-tooltip-text">Vista Compacta: oculta columnas secundarias para pantallas pequeñas y permite desplazamiento horizontal. Pulsa para alternar localmente.</div>
+                        </div>
+                        <div class="wm-tooltip">
+                            <button id="globalCompactBtnIndex" class="compact-toggle-global" onclick="syncCompactGlobal()" title="Sincronizar Compacta en todas las páginas">🌐 Compacta Global</button>
+                            <div class="wm-tooltip-text">Sincroniza la vista compacta en todas las páginas del sitio. Las tablas nuevas también recibirán el estilo.</div>
+                        </div>
+                        <div class="wm-tooltip">
+                            <button id="configCompactIndex" class="compact-toggle-global" onclick="openCompactConfig()">⚙️ Config</button>
+                            <div class="wm-tooltip-text">Configurar qué columnas se ocultan en la Vista Compacta para esta página.</div>
+                        </div>
+                        </div>
+        </div>
+    </header>
+    <div class="container">
+        <div id="seccionAlertas"></div>
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>💸 Registrar Movimiento</h3>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button class="btn btn-ingreso" onclick="configForm('INGRESO')"><i class="fas fa-plus-circle"></i> INGRESO</button>
+                    <button class="btn btn-gasto" onclick="configForm('GASTO')"><i class="fas fa-minus-circle"></i> GASTO</button>
+                </div>
+                <form id="formFinanzas">
+                    <input type="hidden" id="tipoMovimiento" value="INGRESO">
+                    <label for="selectProyecto">Seleccionar Proyecto:</label>
+                    <select id="selectProyecto" required aria-label="Seleccionar Proyecto" title="Seleccionar Proyecto"></select>
+                    <label>Categoría:</label>
+                    <select id="categoria" onchange="mostrarCamposExtra()" title="Categoría">
+                        <option value="anteproyecto">Anteproyecto / Planos</option>
+                        <option value="material">Materiales</option>
+                        <option value="mano_obra">Mano de Obra</option>
+                        <option value="herramienta">Herramienta y Equipo (Renta)</option>
+                        <option value="subcontrato">Sub-Contrato</option>
+                    </select>
+                    <input type="text" id="desc" placeholder="Descripción (Ej: Pago Planos de Registro)" required>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="cant" placeholder="Cantidad" oninput="calcTotal()" required>
+                        <input type="number" id="pu" placeholder="Costo Unit." oninput="calcTotal()" required>
+                    </div>
+                    <input type="text" id="totalMov" placeholder="Total" readonly style="background:#eee; font-weight:bold;">
+                    <div id="extras" class="hidden">
+                        <input type="text" id="proveedor" placeholder="Proveedor / Contratista">
+                        <label>Fecha Inicio/Vence:</label>
+                        <input type="date" id="fechaFin">
+                    </div>
+                    <button type="button" class="btn btn-nav" style="background:var(--a)" onclick="guardarMovimiento()">
+                        <i class="fas fa-save"></i> GUARDAR Y SINCRONIZAR
+                    </button>
+                </form>
             </div>
-            
-            <hr>
-            <h3>📊 Estado de Proyecto</h3>
-            <div id="resumenFinanciero">
-                <div class="card">
-                    <h3>📊 Balance de Proyecto: <span id="nombreProyActivo">---</span></h3>
-                    <select id="filtroProyectoBalance" onchange="renderizarBalance()" style="margin-bottom:15px;" title="Filtro de Proyecto para Balance"></select>
-                    
-                    <div id="visualBalance">
-                        <label>Cobrado al Cliente (Ingresos vs Presupuesto):</label>
-                        <div class="progress-container">
-                            <div id="progresoIngresos" class="progress-bar bar-ingresos" style="width: 0%">0%</div>
-                        </div>
-
-                        <label style="margin-top:15px; display:block;">Ejecución de Gasto (Gastos vs Presupuesto):</label>
-                        <div class="progress-container">
-                            <div id="progresoGastos" class="progress-bar bar-gastos" style="width: 0%">0%</div>
-                        </div>
-
-                        <div class="stats-grid">
-                            <div class="stat-box">
-                                <small>Saldo en Caja</small><br>
-                                <strong id="saldoCaja" style="color:var(--p)">Q 0.00</strong>
+            <div class="card">
+                <h3>🚀 Accesos Rápidos</h3>
+                <div style="display:flex; gap:8px; flex-direction:column;">
+                    <button class="btn btn-nav" onclick="location.href='visita_campo.html'"><i class="fas fa-map-marker-alt"></i> VISITA DE CAMPO</button>
+                    <button class="btn btn-nav" onclick="location.href='proyectos.html'"><i class="fas fa-folder-open"></i> PROYECTOS (Historial)</button>
+                    <button class="btn btn-nav" onclick="location.href='calculadora.html'"><i class="fas fa-calculator"></i> CALCULADORA (Presupuestos)</button>
+                </div>
+                <hr>
+                <h3>📊 Estado de Proyecto</h3>
+                <div id="resumenFinanciero">
+                    <div class="card">
+                        <h3>📊 Balance de Proyecto: <span id="nombreProyActivo">---</span></h3>
+                        <select id="filtroProyectoBalance" onchange="renderizarBalance()" style="margin-bottom:15px;" title="Filtro de Proyecto para Balance"></select>
+                        <div id="visualBalance">
+                            <label>Cobrado al Cliente (Ingresos vs Presupuesto):</label>
+                            <div class="progress-container">
+                                <div id="progresoIngresos" class="progress-bar bar-ingresos" style="width: 0%">0%</div>
                             </div>
-                            <div class="stat-box">
-                                <small>Pendiente de Cobro</small><br>
-                                <strong id="pendienteCobro" style="color:var(--danger)">Q 0.00</strong>
+                            <label style="margin-top:15px; display:block;">Ejecución de Gasto (Gastos vs Presupuesto):</label>
+                            <div class="progress-container">
+                                <div id="progresoGastos" class="progress-bar bar-gastos" style="width: 0%">0%</div>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-box">
+                                    <small>Saldo en Caja</small><br>
+                                    <strong id="saldoCaja" style="color:var(--p)">Q 0.00</strong>
+                                </div>
+                                <div class="stat-box">
+                                    <small>Pendiente de Cobro</small><br>
+                                    <strong id="pendienteCobro" style="color:var(--danger)">Q 0.00</strong>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="card">
-        <h3>📄 Últimos Movimientos</h3>
-        <div style="overflow-x:auto;">
-            <table id="tablaFinanzas">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Proyecto</th>
-                        <th>Tipo</th>
-                        <th>Descripción</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpoFinanzas"></tbody>
-            </table>
+        <div class="card">
+            <h3>📄 Últimos Movimientos</h3>
+            <div style="overflow-x:auto;">
+                <table id="tablaFinanzas">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Proyecto</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoFinanzas"></tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
-
-    <!-- KPI Cards + Chart -->
     <div class="container" style="max-width:1200px; margin-top:10px;">
         <div class="card" style="margin-bottom:16px;">
             <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
@@ -218,460 +206,279 @@
                 <canvas id="chartFinanzas" height="120"></canvas>
             </div>
         </div>
-    </div>
-    
-    <div class="card" style="border-top: 5px solid var(--p); margin-top: 20px;">
-        <button onclick="generarCierreProyecto()" class="btn btn-nav" style="background: var(--p);">
-            <i class="fas fa-file-invoice-dollar"></i> GENERAR CIERRE Y RENTABILIDAD FINAL
-        </button>
-
-        <div id="informeCierre" class="hidden" style="margin-top:20px; padding:15px; background: #fdfdfd; border: 1px solid #ccc;">
-            <h2 style="text-align:center; color: var(--p);">INFORME DE CIERRE WM</h2>
-            <p id="fechaCierre" style="text-align:center; font-size:0.8em;"></p>
-            <hr>
-            <div id="detalleCierre"></div>
-            <canvas id="graficoCierre" style="max-height:200px; margin-top:15px;"></canvas>
+        <div class="card" style="border-top: 5px solid var(--p); margin-top: 20px;">
+            <button onclick="generarCierreProyecto()" class="btn btn-nav" style="background: var(--p);">
+                <i class="fas fa-file-invoice-dollar"></i> GENERAR CIERRE Y RENTABILIDAD FINAL
+            </button>
+            <div id="informeCierre" class="hidden" style="margin-top:20px; padding:15px; background: #fdfdfd; border: 1px solid #ccc;">
+                <h2 style="text-align:center; color: var(--p);">INFORME DE CIERRE WM</h2>
+                <p id="fechaCierre" style="text-align:center; font-size:0.8em;"></p>
+                <hr>
+                <div id="detalleCierre"></div>
+                <canvas id="graficoCierre" style="max-height:200px; margin-top:15px;"></canvas>
+            </div>
         </div>
     </div>
+    <script>
+        // load shared script for global sync
+        (function(){ var s=document.createElement('script'); s.src='js/common-responsive.js'; document.head.appendChild(s); })();
+        // Consolidated JS: cargarProyectos, renderizarBalance, KPIs, movimientos, cierre
+        // Currency helpers
+        function formatCurrency(value, decimals = 2) {
+            const num = Number(value) || 0;
+            try { return 'Q ' + num.toLocaleString('es-GT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); }
+            catch(e) { return 'Q ' + num.toFixed(decimals); }
+        }
+        function parseCurrency(str) {
+            if (str === null || str === undefined) return NaN;
+            let s = String(str).trim(); s = s.replace(/Q|\s|\u00A0/g,''); s = s.replace(/[^0-9.,-]/g,'');
+            if (s.indexOf('.') !== -1 && s.indexOf(',') !== -1) s = s.replace(/\./g,'').replace(/,/g,'.');
+            else if (s.indexOf(',') !== -1 && s.indexOf('.') === -1) s = s.replace(/,/g,'.');
+            const n = Number(s); return isNaN(n) ? NaN : n;
+        }
 
-<script>
-    function inicializar() {
-        cargarProyectos();
-        mostrarMovimientos();
-        verificarVencimientos();
-    }
+        // Compact toggle for tablaFinanzas
+        function toggleCompactIndex() {
+            const tbl = document.getElementById('tablaFinanzas');
+            const btn = document.getElementById('compactToggleIndex');
+            if (!tbl) return;
+            tbl.classList.toggle('compact-view');
+            if (btn) btn.classList.toggle('active');
+            try { localStorage.setItem('index_compact_view', tbl.classList.contains('compact-view') ? '1' : '0'); } catch(e){}
+        }
 
-    function cargarProyectos() {
-        // leer proyectos desde dos posibles keys para compatibilidad
-        const proysA = JSON.parse(localStorage.getItem('wm_proyectos') || "[]");
-        const proysB = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || "[]");
-
-        // normalizar a formato { nombre, total, totalNumber, _raw }
-        const normalized = [];
-        (proysA || []).forEach(p => {
-            normalized.push({ nombre: p.nombre || p.name || p.proyecto || '', total: p.total || p.precio || '', totalNumber: p.totalNumber || p.totalNumber || (typeof p.total === 'number' ? p.total : undefined), _raw: p });
-        });
-        (proysB || []).forEach(p => {
-            const nombre = p.proyecto || p.cliente || p.nombre || p.id || '';
-            const costoRaw = p.costo || p.costo_estimado || p.costo || '';
-            let totalNumber = 0;
-            if (typeof costoRaw === 'number') totalNumber = costoRaw;
-            else if (typeof costoRaw === 'string') totalNumber = parseFloat(costoRaw.toString().replace(/[^0-9.,-]+/g,'').replace(/\./g,'').replace(/,/g,'.')) || 0;
-            normalized.push({ nombre, total: costoRaw, totalNumber, _raw: p });
-        });
-
-        // dedupe by nombre (last wins)
-        const map = {};
-        normalized.forEach(p => { if (p.nombre) map[p.nombre] = p; });
-        const proys = Object.values(map);
-
-        const select = document.getElementById('selectProyecto');
-        const selectFiltro = document.getElementById('filtroProyectoBalance');
-        const options = proys.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-        if (select) select.innerHTML = options;
-        if (selectFiltro) selectFiltro.innerHTML = options;
-        if (proys.length > 0) renderizarBalance();
-    }
-
-    function renderizarBalance() {
-        const proyectoSel = document.getElementById('filtroProyectoBalance') ? document.getElementById('filtroProyectoBalance').value : (document.getElementById('selectProyecto') ? document.getElementById('selectProyecto').value : null);
-        if (!proyectoSel) return;
-
-        // obtener proyectos normalizados (compatible con WM_PROJECTS_DB y wm_proyectos)
-        const rawA = JSON.parse(localStorage.getItem('wm_proyectos') || "[]");
-        const rawB = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || "[]");
-        const norm = [];
-        (rawA || []).forEach(p => norm.push({ nombre: p.nombre || p.proyecto || p.name || '', total: p.total, totalNumber: p.totalNumber, _raw: p }));
-        (rawB || []).forEach(p => {
-            const nombre = p.proyecto || p.cliente || p.nombre || p.id || '';
-            const costoRaw = p.costo || p.costo_estimado || p.costo || '';
-            let totalNumber = 0;
-            if (typeof costoRaw === 'number') totalNumber = costoRaw;
-            else if (typeof costoRaw === 'string') totalNumber = parseFloat(costoRaw.toString().replace(/[^0-9.,-]+/g,'').replace(/\./g,'').replace(/,/g,'.')) || 0;
-            norm.push({ nombre, total: costoRaw, totalNumber, _raw: p });
-        });
-        const proyectos = norm;
-        const proyData = proyectos.find(p => p.nombre === proyectoSel) || null;
-
-        let presupuestoTotal = 0;
-        if (proyData) {
-            if (typeof proyData.totalNumber === 'number') presupuestoTotal = proyData.totalNumber;
-            else if (typeof proyData.total === 'string') {
-                presupuestoTotal = parseFloat((proyData.total || '').toString().replace(/[^0-9.,-]+/g, '').replace(/\./g, '').replace(/,/g, '.')) || 0;
+        // Apply persisted compact view on load
+        try {
+            if (localStorage.getItem('index_compact_view') === '1') {
+                const t = document.getElementById('tablaFinanzas');
+                const b = document.getElementById('compactToggleIndex');
+                if (t) t.classList.add('compact-view');
+                if (b) b.classList.add('active');
             }
+        } catch(e) {}
+
+        // Observe newly added tables and apply compact-view if user enabled it
+        (function observeTablesForCompactIndex(){
+            try{
+                const enabled = localStorage.getItem('index_compact_view') === '1';
+                if (!enabled) return;
+                const applyToNode = (node) => {
+                    if (!node) return;
+                    if (node.tagName === 'TABLE') node.classList.add('compact-view');
+                    if (node.querySelectorAll) node.querySelectorAll('table').forEach(t=>t.classList.add('compact-view'));
+                };
+                document.querySelectorAll('table').forEach(t=>t.classList.add('compact-view'));
+                const mo = new MutationObserver(muts=>{
+                    muts.forEach(m=>{ m.addedNodes && m.addedNodes.forEach(n=>{ if (n.nodeType===1) applyToNode(n); }); });
+                });
+                mo.observe(document.body, { childList: true, subtree: true });
+            } catch(e){}
+        })();
+
+        function inicializar() {
+            cargarProyectos();
+            mostrarMovimientos();
+            verificarVencimientos();
         }
 
-        const finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]");
-        // obtener rango de fechas desde inputs (si existen)
-        const startInput = document.getElementById('startDateFilter') ? document.getElementById('startDateFilter').value : '';
-        const endInput = document.getElementById('endDateFilter') ? document.getElementById('endDateFilter').value : '';
-        const startDate = startInput ? new Date(startInput) : null;
-        const endDate = endInput ? new Date(endInput) : null;
-
-        const movs = finanzas.filter(m => {
-            if (m.proyecto !== proyectoSel) return false;
-            if (!startDate && !endDate) return true;
-            const d = parseDateFlexible(m.fecha);
-            if (!d) return false;
-            if (startDate && d < startDate) return false;
-            if (endDate && d > endDate) return false;
-            return true;
-        });
-
-        const totalIngresos = movs.filter(m => m.tipo === 'INGRESO').reduce((acc, m) => acc + (parseFloat(m.total) || 0), 0);
-        const totalGastos = movs.filter(m => m.tipo === 'GASTO').reduce((acc, m) => acc + (parseFloat(m.total) || 0), 0);
-
-        const porcIngreso = presupuestoTotal > 0 ? (totalIngresos / presupuestoTotal) * 100 : 0;
-        const porcGasto = presupuestoTotal > 0 ? (totalGastos / presupuestoTotal) * 100 : 0;
-
-        document.getElementById('nombreProyActivo').innerText = proyectoSel;
-
-        const barIng = document.getElementById('progresoIngresos');
-        if (barIng) { barIng.style.width = `${Math.min(porcIngreso, 100)}%`; barIng.innerText = `${porcIngreso.toFixed(1)}%`; }
-
-        const barGas = document.getElementById('progresoGastos');
-        if (barGas) { barGas.style.width = `${Math.min(porcGasto, 100)}%`; barGas.innerText = `${porcGasto.toFixed(1)}%`; }
-
-        const saldoEl = document.getElementById('saldoCaja');
-        const pendienteEl = document.getElementById('pendienteCobro');
-        if (saldoEl) saldoEl.innerText = `Q ${(totalIngresos - totalGastos).toLocaleString()}`;
-        if (pendienteEl) pendienteEl.innerText = `Q ${(presupuestoTotal - totalIngresos).toLocaleString()}`;
-        // Actualizar KPIs y gráfica
-        try { updateKPIsAndChart(proyectoSel, presupuestoTotal, totalIngresos, totalGastos, startDate, endDate); } catch(e){ console.warn('updateKPIs error', e); }
-    }
-
-    // KPI animation helper
-    function animateValue(el, start, end, duration=800) {
-        const node = document.getElementById(el);
-        if (!node) return;
-        const startTime = performance.now();
-        function step(now){
-            const t = Math.min((now - startTime) / duration, 1);
-            const val = start + (end - start) * t;
-            node.innerText = (typeof end === 'number') ? `Q ${Number(val).toLocaleString(undefined,{maximumFractionDigits:2})}` : val;
-            if (t < 1) requestAnimationFrame(step);
-        }
-        requestAnimationFrame(step);
-    }
-
-    // Chart instance holder
-    let finChart = null;
-    let cierreChart = null;
-
-    function generarCierreProyecto() {
-        const proyectoSel = document.getElementById('filtroProyectoBalance') ? document.getElementById('filtroProyectoBalance').value : null;
-        if (!proyectoSel) { wmToast("Seleccione un proyecto primero."); return; }
-
-        const rawA = JSON.parse(localStorage.getItem('wm_proyectos') || "[]");
-        const rawB = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || "[]");
-        const proyectos = [];
-        (rawA || []).forEach(p => proyectos.push({ nombre: p.nombre || p.proyecto || p.name || '', total: p.total, totalNumber: p.totalNumber, _raw: p }));
-        (rawB || []).forEach(p => {
-            const nombre = p.proyecto || p.cliente || p.nombre || p.id || '';
-            const costoRaw = p.costo || p.costo_estimado || p.costo || '';
-            let totalNumber = 0;
-            if (typeof costoRaw === 'number') totalNumber = costoRaw;
-            else if (typeof costoRaw === 'string') totalNumber = parseFloat(costoRaw.toString().replace(/[^0-9.,-]+/g,'').replace(/\./g,'').replace(/,/g,'.')) || 0;
-            proyectos.push({ nombre, total: costoRaw, totalNumber, _raw: p });
-        });
-        const finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]");
-        const proyData = proyectos.find(p => p.nombre === proyectoSel) || null;
-
-        // calcular presupuesto plan
-        let presupuestoPlan = 0;
-        if (proyData) {
-            if (typeof proyData.totalNumber === 'number') presupuestoPlan = proyData.totalNumber;
-            else if (typeof proyData.total === 'string') {
-                presupuestoPlan = parseFloat((proyData.total || '').toString().replace(/[^0-9.,-]+/g, '').replace(/\./g, '').replace(/,/g, '.')) || 0;
-            }
-        }
-
-        const movs = finanzas.filter(m => m.proyecto === proyectoSel);
-        const ingresosReales = movs.filter(m => m.tipo === 'INGRESO').reduce((acc, m) => acc + (Number(m.total) || 0), 0);
-        const gastosReales = movs.filter(m => m.tipo === 'GASTO').reduce((acc, m) => acc + (Number(m.total) || 0), 0);
-
-        const utilidadReal = ingresosReales - gastosReales;
-        const margenReal = ingresosReales > 0 ? (utilidadReal / ingresosReales) * 100 : 0;
-
-        // desglose de gastos por categoría
-        const gastosPorCat = {};
-        movs.filter(m => m.tipo === 'GASTO').forEach(m => {
-            const cat = m.cat || 'otros';
-            gastosPorCat[cat] = (gastosPorCat[cat] || 0) + (Number(m.total) || 0);
-        });
-
-        // mostrar informe
-        const informeDiv = document.getElementById('informeCierre');
-        informeDiv.classList.remove('hidden');
-        document.getElementById('fechaCierre').innerText = `Generado el: ${new Date().toLocaleString()}`;
-
-        const detalle = document.getElementById('detalleCierre');
-        detalle.innerHTML = `
-            <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                <span>Presupuesto Original:</span> <strong>Q ${Number(presupuestoPlan).toLocaleString()}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                <span>Total Cobrado:</span> <strong>Q ${Number(ingresosReales).toLocaleString()}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 10px 0; color: var(--danger);">
-                <span>Total Gastado:</span> <strong>- Q ${Number(gastosReales).toLocaleString()}</strong>
-            </div>
-            <hr>
-            <div style="display: flex; justify-content: space-between; margin: 10px 0; font-size: 1.2em;">
-                <span>GANANCIA NETA:</span> <strong style="color: var(--success);">Q ${Number(utilidadReal).toLocaleString()}</strong>
-            </div>
-            <div style="text-align: center; background: var(--s); padding: 10px; border-radius: 5px; margin-top: 10px;">
-                <p style="margin:0;">Margen de Utilidad Real: <strong>${margenReal.toFixed(1)}%</strong></p>
-                <small>${margenReal >= 12 ? '✅ Proyecto Rentable' : '⚠️ Margen por debajo de lo planeado'}</small>
-            </div>
-            <hr>
-            <h4>Desglose de Gastos por Categoría</h4>
-            <div id="listaGastosCat" style="margin-top:8px;">
-                ${Object.keys(gastosPorCat).length === 0 ? '<em>No hay gastos registrados.</em>' : Object.entries(gastosPorCat).map(([k,v])=>`<div style="display:flex; justify-content:space-between; padding:4px 0;"><span>${k}</span><strong>Q ${Number(v).toLocaleString()}</strong></div>`).join('')}
-            </div>
-        `;
-
-        // preparar datos para gráfico (doughnut de gastos por categoría)
-        const ctx = document.getElementById('graficoCierre').getContext('2d');
-        const labels = Object.keys(gastosPorCat);
-        const data = labels.map(l=>gastosPorCat[l]);
-
-        if (cierreChart) {
-            try { cierreChart.destroy(); } catch(e){}
-            cierreChart = null;
-        }
-
-        if (labels.length > 0) {
-            cierreChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{ data: data, backgroundColor: labels.map((_,i)=>['#ff6384','#36a2eb','#ffcd56','#4bc0c0','#9966ff','#c9cbcf'][i%6]) }]
-                },
-                options: { responsive:true, maintainAspectRatio:false }
+        function cargarProyectos() {
+            const proysA = JSON.parse(localStorage.getItem('wm_proyectos') || "[]");
+            const proysB = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || "[]");
+            const normalized = [];
+            (proysA || []).forEach(p => normalized.push({ nombre: p.nombre || p.name || p.proyecto || '', total: p.total || p.precio || '', totalNumber: p.totalNumber || (typeof p.total === 'number' ? p.total : undefined), _raw: p }));
+            (proysB || []).forEach(p => {
+                const nombre = p.proyecto || p.cliente || p.nombre || p.id || '';
+                const costoRaw = p.costo || p.costo_estimado || p.costo || '';
+                let totalNumber = 0;
+                if (typeof costoRaw === 'number') totalNumber = costoRaw;
+                else if (typeof costoRaw === 'string') totalNumber = parseFloat(costoRaw.toString().replace(/[^0-9.,-]+/g,'').replace(/\./g,'').replace(/,/g,'.')) || 0;
+                normalized.push({ nombre, total: costoRaw, totalNumber, _raw: p });
             });
-        } else {
-            // limpiar canvas
-            ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+            const map = {};
+            normalized.forEach(p => { if (p.nombre) map[p.nombre] = p; });
+            const proys = Object.values(map);
+            const select = document.getElementById('selectProyecto');
+            const selectFiltro = document.getElementById('filtroProyectoBalance');
+            const options = proys.map(p => `<option style="color:#0f172a;background:#fff" value="${p.nombre}">${p.nombre}</option>`).join('');
+            if (select) select.innerHTML = options;
+            if (selectFiltro) selectFiltro.innerHTML = options;
+            if (proys.length > 0) renderizarBalance();
         }
 
-        // desplazar al informe
-        informeDiv.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function updateKPIsAndChart(projecto, presupuestoTotal, totalIngresos, totalGastos) {
-        // KPIs
-        animateValue('kpiPresupuesto', 0, presupuestoTotal || 0);
-        animateValue('kpiCobrado', 0, totalIngresos || 0);
-        animateValue('kpiGastado', 0, totalGastos || 0);
-        animateValue('kpiMargen', 0, (totalIngresos - totalGastos) || 0);
-
-        // Chart data: últimos 6 meses para el proyecto
-        // obtener movimientos ya filtrados por proyecto; si se pasan fechas adicionales, respetarlas
-        let finanzasAll = JSON.parse(localStorage.getItem('wm_finanzas') || '[]').filter(m => m.proyecto === projecto);
-        const startDate = arguments[4] || null;
-        const endDate = arguments[5] || null;
-        if (startDate || endDate) {
-            finanzasAll = finanzasAll.filter(m => {
+        function renderizarBalance() {
+            const proyectoSel = document.getElementById('filtroProyectoBalance') ? document.getElementById('filtroProyectoBalance').value : (document.getElementById('selectProyecto') ? document.getElementById('selectProyecto').value : null);
+            if (!proyectoSel) return;
+            const rawA = JSON.parse(localStorage.getItem('wm_proyectos') || "[]");
+            const rawB = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || "[]");
+            const norm = [];
+            (rawA || []).forEach(p => norm.push({ nombre: p.nombre || p.proyecto || p.name || '', total: p.total, totalNumber: p.totalNumber, _raw: p }));
+            (rawB || []).forEach(p => {
+                const nombre = p.proyecto || p.cliente || p.nombre || p.id || '';
+                const costoRaw = p.costo || p.costo_estimado || p.costo || '';
+                let totalNumber = 0;
+                if (typeof costoRaw === 'number') totalNumber = costoRaw;
+                else if (typeof costoRaw === 'string') totalNumber = parseFloat(costoRaw.toString().replace(/[^0-9.,-]+/g,'').replace(/\./g,'').replace(/,/g,'.')) || 0;
+                norm.push({ nombre, total: costoRaw, totalNumber, _raw: p });
+            });
+            const proyectos = norm;
+            const proyData = proyectos.find(p => p.nombre === proyectoSel) || null;
+            let presupuestoTotal = 0;
+            if (proyData) {
+                if (typeof proyData.totalNumber === 'number') presupuestoTotal = proyData.totalNumber;
+                else if (typeof proyData.total === 'string') presupuestoTotal = parseFloat((proyData.total || '').toString().replace(/[^0-9.,-]+/g, '').replace(/\./g, '').replace(/,/g, '.')) || 0;
+            }
+            const finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]");
+            const startInput = document.getElementById('startDateFilter') ? document.getElementById('startDateFilter').value : '';
+            const endInput = document.getElementById('endDateFilter') ? document.getElementById('endDateFilter').value : '';
+            const startDate = startInput ? new Date(startInput) : null;
+            const endDate = endInput ? new Date(endInput) : null;
+            const movs = finanzas.filter(m => {
+                if (m.proyecto !== proyectoSel) return false;
+                if (!startDate && !endDate) return true;
                 const d = parseDateFlexible(m.fecha);
                 if (!d) return false;
                 if (startDate && d < startDate) return false;
                 if (endDate && d > endDate) return false;
                 return true;
             });
+            const totalIngresos = movs.filter(m => m.tipo === 'INGRESO').reduce((acc, m) => acc + (parseFloat(m.total) || 0), 0);
+            const totalGastos = movs.filter(m => m.tipo === 'GASTO').reduce((acc, m) => acc + (parseFloat(m.total) || 0), 0);
+            const porcIngreso = presupuestoTotal > 0 ? (totalIngresos / presupuestoTotal) * 100 : 0;
+            const porcGasto = presupuestoTotal > 0 ? (totalGastos / presupuestoTotal) * 100 : 0;
+            const nombreEl = document.getElementById('nombreProyActivo'); if (nombreEl) nombreEl.innerText = proyectoSel;
+            const barIng = document.getElementById('progresoIngresos'); if (barIng) { barIng.style.width = `${Math.min(porcIngreso, 100)}%`; barIng.innerText = `${porcIngreso.toFixed(1)}%`; }
+            const barGas = document.getElementById('progresoGastos'); if (barGas) { barGas.style.width = `${Math.min(porcGasto, 100)}%`; barGas.innerText = `${porcGasto.toFixed(1)}%`; }
+            const saldoEl = document.getElementById('saldoCaja'); const pendienteEl = document.getElementById('pendienteCobro'); if (saldoEl) saldoEl.innerText = formatCurrency((totalIngresos - totalGastos),2); if (pendienteEl) pendienteEl.innerText = formatCurrency((presupuestoTotal - totalIngresos),2);
+            try { updateKPIsAndChart(proyectoSel, presupuestoTotal, totalIngresos, totalGastos, startDate, endDate); } catch(e){ console.warn('updateKPIs error', e); }
         }
 
-        const finanzas = finanzasAll;
-        const months = [];
-        const now = new Date();
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            months.push({ key, label: d.toLocaleString(undefined,{month:'short', year:'numeric'}) });
-        }
-
-        const ingresosSeries = months.map(m => {
-            const [y, mm] = m.key.split('-').map(x=>parseInt(x,10));
-            const sum = finanzas.filter(f => {
-                if (f.tipo !== 'INGRESO') return false;
-                const fd = parseDateFlexible(f.fecha);
-                if (!fd) return false;
-                return fd.getFullYear() === y && (fd.getMonth()+1) === mm;
-            }).reduce((a,b)=>a+(parseFloat(b.total)||0),0);
-            return sum;
-        });
-        const gastosSeries = months.map(m => {
-            const [y, mm] = m.key.split('-').map(x=>parseInt(x,10));
-            const sum = finanzas.filter(f => {
-                if (f.tipo !== 'GASTO') return false;
-                const fd = parseDateFlexible(f.fecha);
-                if (!fd) return false;
-                return fd.getFullYear() === y && (fd.getMonth()+1) === mm;
-            }).reduce((a,b)=>a+(parseFloat(b.total)||0),0);
-            return sum;
-        });
-
-        const labels = months.map(m => m.label);
-
-        if (!finChart) {
-            const ctx = document.getElementById('chartFinanzas').getContext('2d');
-            finChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Ingresos', data: ingresosSeries, backgroundColor: 'rgba(40,167,69,0.8)' },
-                        { label: 'Gastos', data: gastosSeries, backgroundColor: 'rgba(220,53,69,0.8)' }
-                    ]
-                },
-                options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
-            });
-        } else {
-            finChart.data.labels = labels;
-            finChart.data.datasets[0].data = ingresosSeries;
-            finChart.data.datasets[1].data = gastosSeries;
-            finChart.update();
-        }
-    }
-
-    // Parse dates stored in different local formats (robust)
-    function parseDateFlexible(txt) {
-        if (!txt) return null;
-        if (txt instanceof Date) return txt;
-        // Try ISO parse first
-        const iso = Date.parse(txt);
-        if (!isNaN(iso)) return new Date(iso);
-        // Try DD/MM/YYYY or D/M/YYYY
-        const parts = txt.toString().trim().split(/[\/\-\.]/).map(s=>s.trim());
-        if (parts.length === 3) {
-            // Heuristic: if first part length==4, assume YYYY-MM-DD
-            if (parts[0].length === 4) return new Date(parts[0] + '-' + parts[1] + '-' + parts[2]);
-            // else assume dd/mm/yyyy
-            const dd = parseInt(parts[0],10);
-            const mm = parseInt(parts[1],10);
-            const yyyy = parseInt(parts[2],10);
-            if (!isNaN(dd) && !isNaN(mm) && !isNaN(yyyy)) return new Date(yyyy, mm-1, dd);
-        }
-        // fallback: attempt Date constructor
-        const d = new Date(txt);
-        if (!isNaN(d.getTime())) return d;
-        return null;
-    }
-
-    function configForm(tipo) {
-        document.getElementById('tipoMovimiento').value = tipo;
-        const color = tipo === 'INGRESO' ? '#28a745' : '#dc3545';
-        document.getElementById('formFinanzas').style.borderTop = `5px solid ${color}`;
-    }
-
-    function mostrarCamposExtra() {
-        const cat = document.getElementById('categoria').value;
-        const extras = document.getElementById('extras');
-        if (['material', 'herramienta', 'subcontrato'].includes(cat)) {
-            extras.classList.remove('hidden');
-        } else {
-            extras.classList.add('hidden');
-        }
-    }
-
-    function calcTotal() {
-        const c = document.getElementById('cant').value || 0;
-        const u = document.getElementById('pu').value || 0;
-        document.getElementById('totalMov').value = (c * u).toFixed(2);
-    }
-
-    function guardarMovimiento() {
-        const mov = {
-            proyecto: document.getElementById('selectProyecto').value,
-            tipo: document.getElementById('tipoMovimiento').value,
-            cat: document.getElementById('categoria').value,
-            desc: document.getElementById('desc').value,
-            total: parseFloat(document.getElementById('totalMov').value),
-            fecha: new Date().toLocaleDateString(),
-            fechaFin: document.getElementById('fechaFin').value,
-            proveedor: document.getElementById('proveedor').value
-        };
-
-        let finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]");
-        finanzas.push(mov);
-        localStorage.setItem('wm_finanzas', JSON.stringify(finanzas));
-        
-        wmToast("Movimiento guardado y sincronizado localmente.");
-        location.reload();
-    }
-
-    function mostrarMovimientos() {
-        const finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]");
-        const cuerpo = document.getElementById('cuerpoFinanzas');
-        // obtener filtros: proyecto y rango de fechas
-        const proyectoFiltroEl = document.getElementById('filtroProyectoBalance');
-        const proyectoFiltro = proyectoFiltroEl ? proyectoFiltroEl.value : (document.getElementById('selectProyecto') ? document.getElementById('selectProyecto').value : null);
-        const startInput = document.getElementById('startDateFilter') ? document.getElementById('startDateFilter').value : '';
-        const endInput = document.getElementById('endDateFilter') ? document.getElementById('endDateFilter').value : '';
-        const startDate = startInput ? new Date(startInput) : null;
-        const endDate = endInput ? new Date(endInput) : null;
-
-        const filtrados = finanzas.filter(m => {
-            if (proyectoFiltro && m.proyecto !== proyectoFiltro) return false;
-            if (!startDate && !endDate) return true;
-            const d = parseDateFlexible(m.fecha);
-            if (!d) return false;
-            if (startDate && d < startDate) return false;
-            if (endDate && d > endDate) return false;
-            return true;
-        });
-
-        // ordenar por fecha descendente (intentar parsear fechas)
-        filtrados.sort((a,b)=>{
-            const da = parseDateFlexible(a.fecha);
-            const db = parseDateFlexible(b.fecha);
-            if (da && db) return db - da;
-            return 0;
-        });
-
-        const mostrar = filtrados.slice(0,10);
-        cuerpo.innerHTML = mostrar.map(m => `
-            <tr>
-                <td>${m.fecha}</td>
-                <td>${m.proyecto}</td>
-                <td style="color:${m.tipo === 'INGRESO' ? 'green' : 'red'}">${m.tipo}</td>
-                <td>${m.desc}</td>
-                <td>Q ${Number(m.total || 0).toLocaleString()}</td>
-            </tr>
-        `).join('');
-    }
-
-    function limpiarFiltro() {
-        const s = document.getElementById('startDateFilter');
-        const e = document.getElementById('endDateFilter');
-        if (s) s.value = '';
-        if (e) e.value = '';
-        // re-render balance and movements without date filters
-        renderizarBalance();
-        mostrarMovimientos();
-    }
-
-    function verificarVencimientos() {
-        const finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]");
-        const hoy = new Date();
-        const alertaDiv = document.getElementById('seccionAlertas');
-        
-        finanzas.forEach(m => {
-            if (m.fechaFin && m.cat === 'herramienta') {
-                const vencimiento = new Date(m.fechaFin);
-                const diffTime = vencimiento - hoy;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays <= 5 && diffDays >= 0) {
-                    alertaDiv.innerHTML += `
-                        <div class="alerta">
-                            <i class="fas fa-exclamation-triangle"></i> 
-                            ALERTA: El equipo "<strong>${m.desc}</strong>" vence en ${diffDays} días (${m.fechaFin}). Proveedor: ${m.proveedor}
-                        </div>`;
-                }
+        function animateValue(el, start, end, duration=800) {
+            const node = document.getElementById(el);
+            if (!node) return;
+            const startTime = performance.now();
+            function step(now){
+                const t = Math.min((now - startTime) / duration, 1);
+                const val = start + (end - start) * t;
+                node.innerText = (typeof end === 'number') ? formatCurrency(val, 2) : val;
+                if (t < 1) requestAnimationFrame(step);
             }
-        });
-    }
-</script>
+            requestAnimationFrame(step);
+        }
+
+        let finChart = null;
+        let cierreChart = null;
+
+        function generarCierreProyecto() {
+            const proyectoSel = document.getElementById('filtroProyectoBalance') ? document.getElementById('filtroProyectoBalance').value : null;
+            if (!proyectoSel) { wmToast("Seleccione un proyecto primero."); return; }
+            const rawA = JSON.parse(localStorage.getItem('wm_proyectos') || "[]");
+            const rawB = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || "[]");
+            const proyectos = [];
+            (rawA || []).forEach(p => proyectos.push({ nombre: p.nombre || p.proyecto || p.name || '', total: p.total, totalNumber: p.totalNumber, _raw: p }));
+            (rawB || []).forEach(p => {
+                const nombre = p.proyecto || p.cliente || p.nombre || p.id || '';
+                const costoRaw = p.costo || p.costo_estimado || p.costo || '';
+                let totalNumber = 0;
+                if (typeof costoRaw === 'number') totalNumber = costoRaw;
+                else if (typeof costoRaw === 'string') totalNumber = parseFloat(costoRaw.toString().replace(/[^0-9.,-]+/g,'').replace(/\./g,'').replace(/,/g,'.')) || 0;
+                proyectos.push({ nombre, total: costoRaw, totalNumber, _raw: p });
+            });
+            const finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]");
+            const proyData = proyectos.find(p => p.nombre === proyectoSel) || null;
+            let presupuestoPlan = 0;
+            if (proyData) {
+                if (typeof proyData.totalNumber === 'number') presupuestoPlan = proyData.totalNumber;
+                else if (typeof proyData.total === 'string') presupuestoPlan = parseCurrency(proyData.total) || 0;
+            }
+            const movs = finanzas.filter(m => m.proyecto === proyectoSel);
+            const ingresosReales = movs.filter(m => m.tipo === 'INGRESO').reduce((acc, m) => acc + (Number(m.total) || 0), 0);
+            const gastosReales = movs.filter(m => m.tipo === 'GASTO').reduce((acc, m) => acc + (Number(m.total) || 0), 0);
+            const utilidadReal = ingresosReales - gastosReales;
+            const margenReal = ingresosReales > 0 ? (utilidadReal / ingresosReales) * 100 : 0;
+            const gastosPorCat = {};
+            movs.filter(m => m.tipo === 'GASTO').forEach(m => { const cat = m.cat || 'otros'; gastosPorCat[cat] = (gastosPorCat[cat] || 0) + (Number(m.total) || 0); });
+            const informeDiv = document.getElementById('informeCierre'); if (informeDiv) informeDiv.classList.remove('hidden');
+            if (document.getElementById('fechaCierre')) document.getElementById('fechaCierre').innerText = `Generado el: ${new Date().toLocaleString()}`;
+            const detalle = document.getElementById('detalleCierre');
+            detalle.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin: 10px 0;"><span>Presupuesto Original:</span> <strong>${formatCurrency(presupuestoPlan,2)}</strong></div>
+                <div style="display: flex; justify-content: space-between; margin: 10px 0;"><span>Total Cobrado:</span> <strong>${formatCurrency(ingresosReales,2)}</strong></div>
+                <div style="display: flex; justify-content: space-between; margin: 10px 0; color: var(--danger);"><span>Total Gastado:</span> <strong>- ${formatCurrency(gastosReales,2)}</strong></div>
+                <hr>
+                <div style="display: flex; justify-content: space-between; margin: 10px 0; font-size: 1.2em;"><span>GANANCIA NETA:</span> <strong style="color: var(--success);">${formatCurrency(utilidadReal,2)}</strong></div>
+                <div style="text-align: center; background: var(--s); padding: 10px; border-radius: 5px; margin-top: 10px;"><p style="margin:0;">Margen de Utilidad Real: <strong>${margenReal.toFixed(1)}%</strong></p><small>${margenReal >= 12 ? '✅ Proyecto Rentable' : '⚠️ Margen por debajo de lo planeado'}</small></div>
+                <hr>
+                <h4>Desglose de Gastos por Categoría</h4>
+                <div id="listaGastosCat" style="margin-top:8px;">
+                    ${Object.keys(gastosPorCat).length === 0 ? '<em>No hay gastos registrados.</em>' : Object.entries(gastosPorCat).map(([k,v])=>`<div style="display:flex; justify-content:space-between; padding:4px 0;"><span>${k}</span><strong>${formatCurrency(v,2)}</strong></div>`).join('')}
+                </div>
+            `;
+            const ctx = document.getElementById('graficoCierre').getContext('2d');
+            const labels = Object.keys(gastosPorCat);
+            const data = labels.map(l=>gastosPorCat[l]);
+            if (cierreChart) { try { cierreChart.destroy(); } catch(e){} cierreChart = null; }
+            if (labels.length > 0) {
+                cierreChart = new Chart(ctx, { type: 'doughnut', data: { labels: labels, datasets: [{ data: data, backgroundColor: labels.map((_,i)=>['#ff6384','#36a2eb','#ffcd56','#4bc0c0','#9966ff','#c9cbcf'][i%6]) }] }, options: { responsive:true, maintainAspectRatio:false } });
+            } else { ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height); }
+            if (informeDiv) informeDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateKPIsAndChart(projecto, presupuestoTotal, totalIngresos, totalGastos) {
+            animateValue('kpiPresupuesto', 0, presupuestoTotal || 0);
+            animateValue('kpiCobrado', 0, totalIngresos || 0);
+            animateValue('kpiGastado', 0, totalGastos || 0);
+            animateValue('kpiMargen', 0, (totalIngresos - totalGastos) || 0);
+            let finanzasAll = JSON.parse(localStorage.getItem('wm_finanzas') || '[]').filter(m => m.proyecto === projecto);
+            const startDate = arguments[4] || null; const endDate = arguments[5] || null;
+            if (startDate || endDate) { finanzasAll = finanzasAll.filter(m => { const d = parseDateFlexible(m.fecha); if (!d) return false; if (startDate && d < startDate) return false; if (endDate && d > endDate) return false; return true; }); }
+            const finanzas = finanzasAll;
+            const months = []; const now = new Date();
+            for (let i = 5; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; months.push({ key, label: d.toLocaleString(undefined,{month:'short', year:'numeric'}) }); }
+            const ingresosSeries = months.map(m => { const [y, mm] = m.key.split('-').map(x=>parseInt(x,10)); const sum = finanzas.filter(f => { if (f.tipo !== 'INGRESO') return false; const fd = parseDateFlexible(f.fecha); if (!fd) return false; return fd.getFullYear() === y && (fd.getMonth()+1) === mm; }).reduce((a,b)=>a+(parseFloat(b.total)||0),0); return sum; });
+            const gastosSeries = months.map(m => { const [y, mm] = m.key.split('-').map(x=>parseInt(x,10)); const sum = finanzas.filter(f => { if (f.tipo !== 'GASTO') return false; const fd = parseDateFlexible(f.fecha); if (!fd) return false; return fd.getFullYear() === y && (fd.getMonth()+1) === mm; }).reduce((a,b)=>a+(parseFloat(b.total)||0),0); return sum; });
+            const labels = months.map(m => m.label);
+            if (!finChart) { const ctx = document.getElementById('chartFinanzas').getContext('2d'); finChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [ { label: 'Ingresos', data: ingresosSeries, backgroundColor: 'rgba(40,167,69,0.8)' }, { label: 'Gastos', data: gastosSeries, backgroundColor: 'rgba(220,53,69,0.8)' } ] }, options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } } }); } else { finChart.data.labels = labels; finChart.data.datasets[0].data = ingresosSeries; finChart.data.datasets[1].data = gastosSeries; finChart.update(); }
+        }
+
+        function parseDateFlexible(txt) {
+            if (!txt) return null; if (txt instanceof Date) return txt; const iso = Date.parse(txt); if (!isNaN(iso)) return new Date(iso);
+            const parts = txt.toString().trim().split(/[\/\-\.]/).map(s=>s.trim());
+            if (parts.length === 3) { if (parts[0].length === 4) return new Date(parts[0] + '-' + parts[1] + '-' + parts[2]); const dd = parseInt(parts[0],10); const mm = parseInt(parts[1],10); const yyyy = parseInt(parts[2],10); if (!isNaN(dd) && !isNaN(mm) && !isNaN(yyyy)) return new Date(yyyy, mm-1, dd); }
+            const d = new Date(txt); if (!isNaN(d.getTime())) return d; return null;
+        }
+
+        function configForm(tipo) { const el = document.getElementById('tipoMovimiento'); if (el) el.value = tipo; const form = document.getElementById('formFinanzas'); if (form) form.style.borderTop = `5px solid ${tipo === 'INGRESO' ? '#28a745' : '#dc3545'}`; }
+
+        function mostrarCamposExtra() { const cat = document.getElementById('categoria').value; const extras = document.getElementById('extras'); if (['material', 'herramienta', 'subcontrato'].includes(cat)) extras.classList.remove('hidden'); else extras.classList.add('hidden'); }
+
+        function calcTotal() { const c = Number(document.getElementById('cant').value || 0); const u = Number(document.getElementById('pu').value || 0); const out = document.getElementById('totalMov'); if (out) out.value = (c * u).toFixed(2); }
+
+        function guardarMovimiento() {
+            const mov = { proyecto: (document.getElementById('selectProyecto')||{}).value, tipo: (document.getElementById('tipoMovimiento')||{}).value, cat: (document.getElementById('categoria')||{}).value, desc: (document.getElementById('desc')||{}).value, total: parseFloat((document.getElementById('totalMov')||{}).value)||0, fecha: new Date().toLocaleDateString(), fechaFin: (document.getElementById('fechaFin')||{}).value, proveedor: (document.getElementById('proveedor')||{}).value };
+            let finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]"); finanzas.push(mov); localStorage.setItem('wm_finanzas', JSON.stringify(finanzas)); wmToast("Movimiento guardado y sincronizado localmente."); location.reload();
+        }
+
+        function mostrarMovimientos() {
+            const finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]");
+            const cuerpo = document.getElementById('cuerpoFinanzas');
+            const proyectoFiltroEl = document.getElementById('filtroProyectoBalance');
+            const proyectoFiltro = proyectoFiltroEl ? proyectoFiltroEl.value : (document.getElementById('selectProyecto') ? document.getElementById('selectProyecto').value : null);
+            const startInput = document.getElementById('startDateFilter') ? document.getElementById('startDateFilter').value : '';
+            const endInput = document.getElementById('endDateFilter') ? document.getElementById('endDateFilter').value : '';
+            const startDate = startInput ? new Date(startInput) : null;
+            const endDate = endInput ? new Date(endInput) : null;
+            const filtrados = finanzas.filter(m => { if (proyectoFiltro && m.proyecto !== proyectoFiltro) return false; if (!startDate && !endDate) return true; const d = parseDateFlexible(m.fecha); if (!d) return false; if (startDate && d < startDate) return false; if (endDate && d > endDate) return false; return true; });
+            filtrados.sort((a,b)=>{ const da = parseDateFlexible(a.fecha); const db = parseDateFlexible(b.fecha); if (da && db) return db - da; return 0; });
+            const mostrar = filtrados.slice(0,10);
+            if (cuerpo) cuerpo.innerHTML = mostrar.map(m => `<tr><td>${m.fecha}</td><td>${m.proyecto}</td><td style="color:${m.tipo === 'INGRESO' ? 'green' : 'red'}">${m.tipo}</td><td>${m.desc}</td><td>${formatCurrency(Number(m.total || 0),2)}</td></tr>`).join('');
+        }
+
+        function limpiarFiltro() { const s = document.getElementById('startDateFilter'); const e = document.getElementById('endDateFilter'); if (s) s.value = ''; if (e) e.value = ''; renderizarBalance(); mostrarMovimientos(); }
+
+        function verificarVencimientos() {
+            const finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || "[]"); const hoy = new Date(); const alertaDiv = document.getElementById('seccionAlertas');
+            (finanzas || []).forEach(m => { if (m && m.fechaFin && m.cat === 'herramienta') { const vencimiento = new Date(m.fechaFin); const diffTime = vencimiento - hoy; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if (diffDays <= 5 && diffDays >= 0) { if (alertaDiv) alertaDiv.innerHTML += `<div class="alerta"><i class="fas fa-exclamation-triangle"></i> ALERTA: El equipo "<strong>${m.desc}</strong>" vence en ${diffDays} días (${m.fechaFin}). Proveedor: ${m.proveedor}</div>`; } } });
+        }
+    </script>
 </body>
 </html>

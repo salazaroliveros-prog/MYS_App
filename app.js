@@ -39,6 +39,52 @@
         teja_barro: { tejas_per_m2: 11, madera_ml_per_m2: 0.5, mano_obra_h_per_m2: 0.05, descripcion: 'Teja de barro'}
     };
 
+    // Resolver tipos de losa/techo desde contexto de proyecto (WM_OPEN_PROJECT o WM_PROJECTS_DB)
+    function resolveProjectSlabAndRoof() {
+        try {
+            // Preferir objeto enviado desde visita_campo
+            const rawOpen = localStorage.getItem('WM_OPEN_PROJECT');
+            if (rawOpen) {
+                const op = JSON.parse(rawOpen);
+                const cub = (op.tipo || op.cubierta || '').toString().toUpperCase();
+                return mapCubiertaToTypes(cub);
+            }
+
+            // Buscar proyecto activo por nombre desde WM_PROJECTS_DB o wm_proyectos
+            const projName = (document.getElementById('nombreProyecto') && document.getElementById('nombreProyecto').value) || '';
+            const dbA = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || '[]');
+            const dbB = JSON.parse(localStorage.getItem('wm_proyectos') || '[]');
+            const dbC = JSON.parse(localStorage.getItem('proyectos') || '[]');
+            const all = [].concat(dbA || [], dbB || [], dbC || []);
+            const found = all.find(p => (p.proyecto || p.nombre || '').toString().trim() === projName.toString().trim());
+            if (found) {
+                const cub2 = (found.cubierta || found.tipo || found.cubierta || '').toString().toUpperCase();
+                return mapCubiertaToTypes(cub2);
+            }
+
+            // Fallback por defecto
+            return { slab: 'losa_vigueta_bovedilla', roof: 'lamina_aluzinc' };
+        } catch (e) { console.warn('resolveProjectSlabAndRoof error', e); return { slab: 'losa_vigueta_bovedilla', roof: 'lamina_aluzinc' }; }
+    }
+
+    function mapCubiertaToTypes(cubiertaStr) {
+        const s = (cubiertaStr || '').toString().toUpperCase();
+        let slab = 'losa_vigueta_bovedilla';
+        let roof = 'lamina_aluzinc';
+        if (!s) return { slab, roof };
+        if (s.includes('LOSA') && (s.includes('MACIZ') || s.includes('SÓL') || s.includes('SOLID') || s.includes('SOLIDA'))) slab = 'losa_maciza';
+        else if (s.includes('PREFAB')) slab = 'losa_prefabricada';
+
+        if (s.includes('ESTRUCTUR')) roof = 'estructura_metalica';
+        else if (s.includes('PERGOLA')) {
+            // No se especifica madera/metal en captura simple; asumir metálica
+            roof = s.includes('MADER') ? 'pergola_madera' : 'pergola_metal';
+        }
+        else if (s.includes('TEJA')) roof = 'teja_barro';
+
+        return { slab, roof };
+    }
+
     // Valores por defecto para estimaciones económicas
     const defaults = {
         avgCostoConcretoPorM3: 420, // Q por m3 (aprox.)
@@ -198,20 +244,19 @@
         // Blocks en millares
         const blockMillares = Number(((m2 * f.block) / 1000).toFixed(2));
 
-        // Añadir cálculo por tipo de losa
+        // Añadir cálculo por tipo de losa y tipo de techo usando parámetros del proyecto (visita_campo)
         let slabExtra = {};
+        let roofExtra = {};
         try {
-            const tipoLosa = (document.getElementById('tipoLosa') && document.getElementById('tipoLosa').value) || 'losa_vigueta_bovedilla';
+            const types = resolveProjectSlabAndRoof();
+            const tipoLosa = types.slab || 'losa_vigueta_bovedilla';
+            const tipoTecho = types.roof || 'lamina_aluzinc';
+
             const s = slabTypes[tipoLosa] || slabTypes.losa_vigueta_bovedilla;
             const concretoLosa_m3 = Number((m2 * (s.concrete_m3_per_m2 || 0)).toFixed(3));
             const hierroLosa_kg = Math.round(m2 * (s.steel_kg_per_m2 || 0));
             slabExtra = { tipo: tipoLosa, descripcion: s.descripcion, concreto_m3: concretoLosa_m3, hierro_kg: hierroLosa_kg };
-        } catch (e) { slabExtra = {}; }
 
-        // Añadir cálculo por tipo de techo
-        let roofExtra = {};
-        try {
-            const tipoTecho = (document.getElementById('tipoTecho') && document.getElementById('tipoTecho').value) || 'lamina_aluzinc';
             const r = roofTypes[tipoTecho] || roofTypes.lamina_aluzinc;
             const roof = {};
             if (r.chapa_m2) roof.chapa_m2 = Number((m2 * r.chapa_m2).toFixed(2));
@@ -222,7 +267,7 @@
             roof.mano_obra_h = Number((m2 * (r.mano_obra_h_per_m2 || 0)).toFixed(2));
             roof.descripcion = r.descripcion;
             roofExtra = roof;
-        } catch (e) { roofExtra = {}; }
+        } catch (e) { console.warn('slab/roof calc error', e); slabExtra = {}; roofExtra = {}; }
 
         return {
             cemento: cementoTotal,

@@ -22,9 +22,14 @@
       "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "header-logo.png",
+      "sizes": "256x256",
+      "type": "image/png"
     }
   ],
-  "start_url": "./inicio.html",
+  "start_url": "./index.html",
   "scope": "./",
   "description": "SOFTCON WM M&S - Calculadora de presupuestos y logística",
   "background_color": "#00447C",

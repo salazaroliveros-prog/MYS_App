@@ -4,12 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WM/M&S - Gestión de Campo</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <!-- 'theme-color' is not fully supported in Firefox and Opera, but causes no harm -->
+    <!-- 'theme-color' is not fully supported in Firefox and Opera, but causes no harm -->
+    <meta name="theme-color" content="#00447C">
+    <!-- Mejora compatibilidad: color de tema para navegadores que soportan media queries -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#00447C">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000b1a">
+    <meta name="color-scheme" content="light dark">
     <!-- Tailwind para diseño -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- html2pdf para exportación -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="css/common-responsive.css">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
@@ -74,6 +84,45 @@
             background-color: rgba(204, 172, 0, 0.1);
             cursor: pointer;
         }
+
+        /* Animación al cambiar valores */
+        .value-change {
+            transform: scale(1.03);
+            transition: transform 300ms ease, opacity 300ms ease;
+        }
+        .value-anim {
+            display: inline-block;
+            will-change: transform, opacity;
+        }
+        /* Mejor contraste para selects y opciones */
+        select.form-input, select#proySelectForCalc {
+            color: #0f172a; /* texto oscuro */
+            background-color: #ffffff; /* fondo blanco */
+            border: 1px solid #d1d5db;
+            padding: 0.6rem;
+        }
+        select.form-input:focus, select#proySelectForCalc:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(204,172,0,0.12);
+            border-color: var(--mostaza);
+        }
+        option {
+            color: #0f172a;
+            background-color: #ffffff;
+        }
+        /* Responsive header and button sizes */
+        @media (max-width: 640px) {
+            header.header-bg { padding: 10px; }
+            header.header-bg .leading-tight h1 { font-size: 1rem; }
+            header.header-bg img { height:44px; }
+            .header-actions { display:flex; gap:8px; align-items:center; }
+            .header-actions button { padding:8px; }
+            .form-input { padding:0.6rem; }
+            .label-style { font-size:0.65rem; }
+        }
+        /* Resultado de búsqueda: seleccionado visible */
+        .search-item { color: #0f172a; }
+        .search-item.selected { background-color: var(--mostaza); color: #08121a; }
     </style>
     <script src="wm_toast.js"></script>
 </head>
@@ -83,7 +132,8 @@
     <header class="header-bg p-4 md:p-6 text-white shadow-2xl z-50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <button onclick="showPage('inicio')" class="p-2 hover:bg-white/10 rounded-full transition-colors" title="Ir a Inicio">
+                <img src="logo.png" alt="Logo CONSTRUCTORA WM/M&S" style="height:56px;max-width:100%;width:auto;object-fit:contain;margin-right:6px">
+                <button onclick="location.href='index.html'" class="p-2 hover:bg-white/10 rounded-full transition-colors" title="Ir a Inicio">
                     <i data-lucide="home" class="mostaza-text w-6 h-6 md:w-8 md:h-8"></i>
                 </button>
                 <div class="leading-tight">
@@ -95,9 +145,16 @@
                     </p>
                 </div>
             </div>
-            <div class="text-right hidden sm:block">
-                <div id="clock-date" class="text-[10px] font-bold uppercase text-gray-400 mb-1"></div>
-                <div id="clock-time" class="text-lg md:text-2xl font-black mostaza-text"></div>
+            <div class="text-right header-actions">
+                <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end;">
+                    <button onclick="location.href='index.html'" title="Ir a Inicio" class="p-2 hover:bg-white/10 rounded-full transition-colors" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.08)">
+                        <i data-lucide="home" class="mostaza-text w-6 h-6 md:w-8 md:h-8"></i>
+                    </button>
+                    <div style="text-align:right;">
+                        <div id="clock-date" class="text-[10px] font-bold uppercase text-gray-400 mb-1"></div>
+                        <div id="clock-time" class="text-lg md:text-2xl font-black mostaza-text"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -148,15 +205,66 @@
                     </div>
                 </button>
             </div>
+            <div class="w-full max-w-2xl mt-4 flex items-center gap-3">
+                <input type="file" id="importRenglonesFile" accept=".csv" style="display:none" onchange="importRenglonesFromFile(this)">
+                <button onclick="document.getElementById('importRenglonesFile').click()" class="p-3 bg-white border border-gray-200 rounded-xl shadow-sm">➕ Importar Renglones (CSV)</button>
+                <div class="text-sm text-gray-500">Formato esperado: <code>project_id,index,nombre,unidad,cantidad,precio,subtotal</code></div>
+            </div>
+            <!-- Modal de vista previa de importación -->
+            <div id="importPreviewModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+                <div class="bg-white rounded-xl max-w-3xl w-full p-4 shadow-2xl">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold">Vista previa: Renglones detectados</h3>
+                        <button onclick="closeImportPreview()" class="text-gray-500">Cerrar ✖</button>
+                    </div>
+                    <div id="importPreviewContent" style="max-height:400px; overflow:auto; font-size:14px;"></div>
+                            <div class="mt-3 grid grid-cols-1 gap-2">
+                                <div id="csvMappingControls" style="font-size:13px; color:#374151"></div>
+                                <div style="display:flex; gap:12px; align-items:center; font-size:13px;">
+                                    <label class="flex items-center gap-2"><input type="radio" name="importTarget" value="custom" checked> Guardar como renglones personalizados</label>
+                                    <label class="flex items-center gap-2"><input type="radio" name="importTarget" value="merge"> Fusionar en renglones base (asignar tipo):</label>
+                                    <select id="importMergeTipo" style="padding:6px; border-radius:6px; border:1px solid #ddd;" title="Seleccionar tipo de proyecto para fusionar renglones">
+                                        <option value="residencial">residencial</option>
+                                        <option value="comercial">comercial</option>
+                                        <option value="industrial">industrial</option>
+                                        <option value="civil">civil</option>
+                                        <option value="publica">publica</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center gap-3">
+                                <label style="font-size:13px"><input type="checkbox" id="skipInvalidRows" checked> Omitir filas inválidas</label>
+                                <label style="font-size:13px"><input type="checkbox" id="skipDuplicates" checked> Omitir duplicados detectados</label>
+                            </div>
+                            <div class="mt-4 flex justify-end gap-2">
+                                <button onclick="confirmImportAction()" class="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold">Confirmar importación</button>
+                                <button onclick="closeImportPreview()" class="px-3 py-2 bg-gray-100 rounded-xl">Cancelar</button>
+                            </div>
+                </div>
+            </div>
             
             <div style="margin-top:12px; display:flex; gap:8px; width:100%; max-width:600px;">
-                <button onclick="location.href='inicio.html'" class="p-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl" style="flex:1;">← Volver a Inicio</button>
+                <button onclick="location.href='index.html'" class="p-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl" style="flex:1;">← Volver a Inicio</button>
                 <button onclick="location.href='calculadora.html'" class="p-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl" style="flex:1;">Ir a Calculadora →</button>
             </div>
 
             <div style="margin-top:12px; display:flex; gap:8px; width:100%; max-width:900px;">
                 <button onclick="abrirProyectoEnCalculadoraSeleccionado()" class="p-3 bg-indigo-600 text-white rounded-xl" style="flex:1;">Abrir proyecto seleccionado en Calculadora</button>
                 <select id="proySelectForCalc" style="flex:2; padding:8px; border-radius:6px; border:1px solid #ddd;" title="Seleccionar proyecto para abrir en calculadora"></select>
+            </div>
+
+            <!-- Pruebas rápidas de formato -->
+            <div class="w-full max-w-2xl mt-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm font-bold">Pruebas de Formato de Moneda</div>
+                        <div class="flex gap-2">
+                            <button onclick="simulateFormatTests()" class="px-3 py-2 bg-yellow-400 rounded-md text-black font-semibold">Ejecutar prueba</button>
+                            <button onclick="resetFormatTests()" class="px-3 py-2 bg-gray-100 rounded-md">Limpiar</button>
+                        </div>
+                    </div>
+                    <div id="formatTestResults" class="mt-3 text-sm text-gray-700"></div>
+                </div>
             </div>
         </section>
 
@@ -187,8 +295,8 @@
                                 <label class="label-style">Ubicación (GPS / Manual)</label>
                                 <div class="flex gap-2">
                                     <input type="text" id="ubicacion" class="form-input" placeholder="Coordenadas o dirección">
-                                    <button type="button" onclick="getGPS()" class="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
-                                        <i data-lucide="map-pin" class="w-5 h-5 text-red-600"></i>
+                                    <button type="button" onclick="getGPS()" class="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors" title="Obtener ubicación GPS" aria-label="Obtener ubicación GPS">
+                                        <i data-lucide="map-pin" class="w-5 h-5 text-red-600" aria-hidden="true"></i>
                                     </button>
                                 </div>
                             </div>
@@ -224,11 +332,11 @@
                                 <div class="space-y-4">
                                     <div>
                                         <label class="label-style text-blue-700">Presupuesto Estimado</label>
-                                        <input type="text" id="costo_estimado" class="form-input font-black text-gray-800" readonly>
+                                        <input type="text" id="costo_estimado" class="form-input font-black text-gray-800" readonly placeholder="Presupuesto estimado" title="Presupuesto Estimado">
                                     </div>
                                     <div>
                                         <label class="label-style text-green-700">Plazo de Ejecución</label>
-                                        <input type="text" id="duracion_estimada" class="form-input font-black text-gray-800" readonly>
+                                        <input type="text" id="duracion_estimada" class="form-input font-black text-gray-800" readonly placeholder="Plazo estimado" title="Plazo de Ejecución Estimado">
                                     </div>
                                 </div>
                             </div>
@@ -239,6 +347,13 @@
                             </div>
                         </div>
                     </form>
+                    <div id="projectFinanzas" class="mt-6 bg-white p-4 rounded-lg shadow-sm" style="display:none;">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="font-bold">Movimientos relacionados</div>
+                            <div class="text-sm text-gray-500">Se muestran los movimientos asociados al proyecto/cliente</div>
+                        </div>
+                        <div id="projectFinanzasContent" style="max-height:240px; overflow:auto; font-size:13px;"></div>
+                    </div>
                 </div>
                 
                 <!-- Acciones -->
@@ -253,6 +368,15 @@
                         <button onclick="exportarPDF()" class="bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-gray-50">
                             <i data-lucide="printer" class="w-5 h-5"></i> Imprimir
                         </button>
+                        <button id="compactToggleProjects" onclick="toggleCompactProjects()" class="bg-white border-2 border-gray-300 text-gray-700 px-4 py-3 rounded-xl font-bold" title="Vista Compacta">🗂️ Compacta</button>
+                        <div class="wm-tooltip">
+                            <button id="globalCompactBtnProjects" class="compact-toggle-global" onclick="syncCompactGlobal()">🌐 Compacta Global</button>
+                            <div class="wm-tooltip-text">Sincroniza la vista compacta en todas las páginas. Oculta columnas secundarias y aplica la vista a tablas nuevas.</div>
+                        </div>
+                        <div class="wm-tooltip">
+                            <button id="configCompactProjects" class="compact-toggle-global" onclick="openCompactConfig()">⚙️ Config</button>
+                            <div class="wm-tooltip-text">Configurar qué columnas se ocultan en la Vista Compacta para esta página.</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -520,7 +644,7 @@
             const db = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || '[]');
             const sel = document.getElementById('proySelectForCalc');
             if (!sel) return;
-            sel.innerHTML = '<option value="">-- Seleccione proyecto --</option>' + db.map(p=>`<option value="${p.id||p.proyecto}">${(p.proyecto||p.id)}${p.fecha? ' - '+p.fecha:''}</option>`).join('');
+            sel.innerHTML = '<option value="">-- Seleccione proyecto --</option>' + db.map(p=>`<option style="color:#0f172a;background:#fff" value="${p.id||p.proyecto}">${(p.proyecto||p.id)}${p.fecha? ' - '+p.fecha:''}</option>`).join('');
         }
 
         function abrirProyectoEnCalculadoraSeleccionado(){
@@ -539,6 +663,28 @@
             location.href = 'calculadora.html';
         }
 
+        function showProjectFinanzas(projectIdOrName){
+            const container = document.getElementById('projectFinanzas');
+            const content = document.getElementById('projectFinanzasContent');
+            if (!container || !content) return;
+            const all = JSON.parse(localStorage.getItem('wm_finanzas') || '[]');
+            const proyecto = projectIdOrName || document.getElementById('projectID').innerText || '';
+            const byProject = all.filter(m => (m.proyecto||'').toString() === proyecto || (m.cliente||'').toString().trim() === proyecto || (m.cliente||'').toString().trim().toLowerCase() === (proyecto||'').toString().trim().toLowerCase());
+            if (!byProject || byProject.length === 0) { container.style.display='none'; content.innerHTML = '<div class="text-gray-500">No hay movimientos relacionados</div>'; return; }
+            container.style.display='block';
+            const table = document.createElement('table'); table.style.width='100%'; table.style.borderCollapse='collapse';
+            table.innerHTML = `<thead><tr style="background:#f7fafc"><th style="padding:6px;border:1px solid #eee">Fecha</th><th style="padding:6px;border:1px solid #eee">Descripción</th><th style="padding:6px;border:1px solid #eee">Proveedor</th><th style="padding:6px;border:1px solid #eee">Categoría</th><th style="padding:6px;border:1px solid #eee">Tipo</th><th style="padding:6px;border:1px solid #eee">Total</th></tr></thead>`;
+            const body = document.createElement('tbody');
+            byProject.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="padding:6px;border:1px solid #eee">${m.fecha||''}</td><td style="padding:6px;border:1px solid #eee">${m.desc||m.descripcion||''}</td><td style="padding:6px;border:1px solid #eee">${m.proveedor||''}</td><td style="padding:6px;border:1px solid #eee">${m.categoria||''}</td><td style="padding:6px;border:1px solid #eee">${m.tipo||''}</td><td style="padding:6px;border:1px solid #eee">${typeof m.total !== 'undefined' ? (m.total) : (m.total = (Number(m.costo_unitario||0)*Number(m.cantidad||1)))}</td>`;
+                body.appendChild(tr);
+            });
+            table.appendChild(body);
+            content.innerHTML = '';
+            content.appendChild(table);
+        }
+
         // Reloj
         function tick() {
             const now = new Date();
@@ -550,6 +696,570 @@
         // Ejecutar popular select al cargar
         try { popularSelectProyectosParaCalculadora(); } catch(e){ }
 
+    </script>
+    <script>
+        // Importar renglones CSV y mostrar vista previa antes de guardar
+        let __lastParsedRenglones = [];
+        let __lastParsedRenglonesParsed = null; // { header:[], rows:[] }
+        function importRenglonesFromFile(input) {
+            const file = input.files && input.files[0];
+            if (!file) return wmToast('No se seleccionó archivo.');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const parsedObj = parseRenglonesCSV(text);
+                if (!parsedObj || !parsedObj.rows || parsedObj.rows.length === 0) { wmToast('CSV vacío o sin datos detectables.'); return; }
+                __lastParsedRenglonesParsed = parsedObj;
+                __lastParsedRenglones = parsedObj.rows;
+                showImportPreview(parsedObj);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseRenglonesCSV(text){
+            const rawLines = text.split(/\r?\n/).map(l=>l.replace(/\uFEFF/g,'').trim()).filter(l=>l.length>0);
+            if (rawLines.length < 2) return { header: [], rows: [] };
+            // detectar separador (',' o ';')
+            const firstLine = rawLines[0];
+            const sep = firstLine.indexOf(';') !== -1 && firstLine.indexOf(',') === -1 ? ';' : ',';
+            const lines = rawLines;
+            if (lines.length < 2) return { header: [], rows: [] };
+            const header = lines[0].split(sep).map(h=>h.trim());
+            const headerLower = header.map(h=>h.toLowerCase());
+            const idxOf = name => headerLower.findIndex(h=>h.indexOf(name) !== -1);
+            const projectIdx = idxOf('project_id') >= 0 ? idxOf('project_id') : idxOf('project') >=0 ? idxOf('project') : -1;
+            const indexIdx = idxOf('index');
+            const nombreIdx = idxOf('nombre') >=0 ? idxOf('nombre') : idxOf('n')>=0 ? idxOf('n') : 0;
+            const unidadIdx = idxOf('unidad') >=0 ? idxOf('unidad') : idxOf('u');
+            const cantidadIdx = idxOf('cantidad') >=0 ? idxOf('cantidad') : idxOf('c');
+            const precioIdx = idxOf('precio') >=0 ? idxOf('precio') : idxOf('p');
+            const subtotalIdx = idxOf('subtotal') >=0 ? idxOf('subtotal') : -1;
+            // detectar si es un CSV de finanzas (columnas: cliente, descripcion, cantidad, unidad, costo, tipo, categoria, fecha, proveedor)
+            const isFinanzas = headerLower.some(h => h.includes('cliente')) || headerLower.some(h => h.includes('descripcion'));
+
+            const proyectosDB = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || '[]');
+            const rows = [];
+            for (let i=1;i<lines.length;i++){
+                const parts = lines[i].split(sep).map(p=>p.trim());
+                if (parts.length === 0) continue;
+                let pid = projectIdx >= 0 ? parts[projectIdx] : '';
+                if (!pid) {
+                    const projNameIdx = headerLower.findIndex(h=>h.includes('proyecto')||h.includes('project_name')||h.includes('nombre'));
+                    if (projNameIdx >= 0) pid = parts[projNameIdx];
+                }
+                if (!pid) pid = '';
+                const isIdLike = pid.toString().startsWith('PROY-');
+                if (!isIdLike && pid) {
+                    const found = proyectosDB.find(p => (p.proyecto||p.nombre||'').toString().trim() === pid.toString().trim());
+                    if (found && found.id) pid = found.id; else if (found && found.proyecto) pid = found.proyecto;
+                }
+                const renglon = {
+                    __line: i+1,
+                    __parts: parts.slice(),
+                    project_id: pid,
+                    index: indexIdx>=0 ? parts[indexIdx] : null,
+                    n: nombreIdx>=0 ? parts[nombreIdx] : '',
+                    u: unidadIdx>=0 ? parts[unidadIdx] : '',
+                    cantidad: cantidadIdx>=0 ? (parseFloat(String(parts[cantidadIdx]||'').replace(/[^0-9.,-]/g,'').replace(/,/g,'.')) || 0) : 0,
+                    precio: precioIdx>=0 ? (parseFloat(String(parts[precioIdx]||'').replace(/[^0-9.,-]/g,'').replace(/,/g,'.')) || 0) : 0,
+                    subtotal: subtotalIdx>=0 ? (parseFloat(String(parts[subtotalIdx]||'').replace(/[^0-9.,-]/g,'').replace(/,/g,'.')) || null) : null,
+                    ts: Date.now()
+                };
+                rows.push(renglon);
+            }
+            return { header, rows, type: isFinanzas ? 'finanzas' : 'renglones', sep };
+        }
+
+        function showImportPreview(parsedObj){
+            const container = document.getElementById('importPreviewContent');
+            if (!container) return;
+            container.innerHTML = '';
+            const headers = parsedObj.header || [];
+            const rows = parsedObj.rows || [];
+
+            // Construir controles de mapeo
+            const mappingDiv = document.getElementById('csvMappingControls');
+            mappingDiv.innerHTML = '';
+            const expected = (parsedObj.type === 'finanzas') ? ['cliente','descripcion','cantidad','unidad','costo','tipo','categoria','fecha','proveedor'] : ['project_id','index','n','u','cantidad','precio','subtotal'];
+            const selects = {};
+            const headerOptions = ['--ninguno--'].concat(headers);
+            expected.forEach(field => {
+                const wrap = document.createElement('div');
+                wrap.style.display = 'inline-block';
+                wrap.style.marginRight = '8px';
+                const label = document.createElement('label');
+                label.style.fontSize = '12px';
+                label.style.marginRight = '6px';
+                label.innerText = field + ':';
+                const sel = document.createElement('select');
+                sel.style.padding = '6px';
+                sel.style.border = '1px solid #ddd';
+                sel.style.borderRadius = '6px';
+                headerOptions.forEach(h => { const o = document.createElement('option'); o.value = h; o.innerText = h; sel.appendChild(o); });
+                sel.dataset.field = field;
+                sel.id = 'map_' + field;
+                wrap.appendChild(label); wrap.appendChild(sel);
+                mappingDiv.appendChild(wrap);
+                selects[field] = sel;
+            });
+
+            // Clasificar y validar filas
+            const mapping = {}; for (let k in selects) mapping[k] = selects[k].value; // valores iniciales
+            function collectMapping() { for (let k in selects) mapping[k] = selects[k].value; }
+
+            // Detectar duplicados contra base y dentro del archivo
+            const keyBase = getPreferredRenglonesKey();
+            let baseObj = {};
+            try { baseObj = JSON.parse(localStorage.getItem(keyBase) || '{}'); } catch(e) { baseObj = {}; }
+            const customObj = JSON.parse(localStorage.getItem('wm_custom_renglones') || '{}');
+
+            function isDuplicateAgainstExisting(r) {
+                const lists = [];
+                // revisar en baseObj (todas las tipos)
+                Object.keys(baseObj||{}).forEach(t => { (baseObj[t]||[]).forEach(it => lists.push(it)); });
+                // revisar custom para su proyecto
+                const customList = customObj[r.project_id] || [];
+                customList.forEach(it=>lists.push(it));
+                // comparar por nombre+unidad+precio (tolerancia)
+                for (let it of lists) {
+                    try {
+                        const sameName = (it.n||'').toString().trim().toLowerCase() === (r.n||'').toString().trim().toLowerCase();
+                        const sameU = (it.u||'').toString().trim().toLowerCase() === (r.u||'').toString().trim().toLowerCase();
+                        const pIt = Number(it.p||it.precio||it.price||0);
+                        const pR = Number(r.precio||0);
+                        const priceClose = Math.abs(pIt - pR) < 0.01;
+                        if (sameName && sameU && priceClose) return true;
+                    } catch(e){ }
+                }
+                // load shared script for global sync
+                (function(){ var s=document.createElement('script'); s.src='js/common-responsive.js'; document.head.appendChild(s); })();
+                return false;
+            }
+
+            // Construir tabla con estado (valid / invalid / duplicate)
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            if (parsedObj.type === 'finanzas') {
+                table.innerHTML = `<thead><tr style="background:#f3f4f6"><th style="padding:6px;border:1px solid #eee">#</th><th style="padding:6px;border:1px solid #eee">Cliente</th><th style="padding:6px;border:1px solid #eee">Descripción</th><th style="padding:6px;border:1px solid #eee">Unidad</th><th style="padding:6px;border:1px solid #eee">Cantidad</th><th style="padding:6px;border:1px solid #eee">Costo</th><th style="padding:6px;border:1px solid #eee">Tipo</th><th style="padding:6px;border:1px solid #eee">Proveedor</th><th style="padding:6px;border:1px solid #eee">Estado</th></tr></thead>`;
+            } else {
+                table.innerHTML = `<thead><tr style="background:#f3f4f6"><th style="padding:6px;border:1px solid #eee">#</th><th style="padding:6px;border:1px solid #eee">Project ID</th><th style="padding:6px;border:1px solid #eee">Nombre</th><th style="padding:6px;border:1px solid #eee">Unidad</th><th style="padding:6px;border:1px solid #eee">Cantidad</th><th style="padding:6px;border:1px solid #eee">Precio</th><th style="padding:6px;border:1px solid #eee">Subtotal</th><th style="padding:6px;border:1px solid #eee">Estado</th></tr></thead>`;
+            }
+            const body = document.createElement('tbody');
+
+            // helper validation and rendering per tipo
+            const seenInternal = new Set();
+            rows.forEach((r, idx) => {
+                const tr = document.createElement('tr');
+                let issues = [];
+                let estado = 'OK';
+                let dupInternal = false;
+                let dupExisting = false;
+                if (parsedObj.type === 'finanzas') {
+                    // expected fields: cliente, descripcion, cantidad, unidad, costo, tipo, categoria, fecha, proveedor
+                    if (!r.__parts) {
+                        // fallback: use existing properties
+                    }
+                    if (!r.cliente) {
+                        const hLower = (parsedObj.header||[]).map(h=>h.toLowerCase());
+                        const cidx = hLower.findIndex(h => h.includes('cliente'));
+                        if (cidx >= 0 && r.__parts && r.__parts[cidx] !== undefined) r.cliente = r.__parts[cidx];
+                    }
+                    if (!r.descripcion) {
+                        const hLower = (parsedObj.header||[]).map(h=>h.toLowerCase());
+                        const didx = hLower.findIndex(h => h.includes('descripcion')||h.includes('desc'));
+                        if (didx >= 0 && r.__parts && r.__parts[didx] !== undefined) r.descripcion = r.__parts[didx];
+                    }
+                    // normalize numbers
+                    r.cantidad = Number(String(r.cantidad||'').replace(/[^0-9.,-]/g,'').replace(/,/g,'.'))||0;
+                    r.costo = Number(String(r.costo||r.precio||'').replace(/[^0-9.,-]/g,'').replace(/,/g,'.'))||0;
+
+                    if (!r.cliente || String(r.cliente).trim()==='') issues.push('cliente faltante');
+                    if (!r.descripcion || String(r.descripcion).trim()==='') issues.push('descripcion faltante');
+                    if (isNaN(Number(r.cantidad))) issues.push('cantidad no numérica');
+                    if (Number(r.cantidad) < 0) issues.push('cantidad negativa');
+                    if (isNaN(Number(r.costo))) issues.push('costo no numérico');
+                    if (Number(r.costo) < 0) issues.push('costo negativo');
+
+                    // duplicates: by cliente+descripcion+proveedor+costo
+                    const internalKey = `${(r.cliente||'').toString().trim().toLowerCase()}::${(r.descripcion||'').toString().trim().toLowerCase()}::${(r.proveedor||'').toString().trim().toLowerCase()}::${Number(r.costo)||0}`;
+                    dupInternal = seenInternal.has(internalKey);
+                    seenInternal.add(internalKey);
+                    // duplicate against existing finance entries
+                    const finanzasAll = JSON.parse(localStorage.getItem('wm_finanzas')||'[]');
+                    dupExisting = finanzasAll.some(f => (f.cliente||'').toString().trim().toLowerCase() === (r.cliente||'').toString().trim().toLowerCase() && (f.desc||'').toString().trim().toLowerCase() === (r.descripcion||'').toString().trim().toLowerCase() && Math.abs((Number(f.total)||0) - (Number(r.costo||0)*(Number(r.cantidad||1)||1)))<0.01);
+
+                    if (issues.length>0) estado = 'ERROR: ' + issues.join('; ');
+                    else if (dupInternal) estado = 'DUPLICADO (archivo)';
+                    else if (dupExisting) estado = 'DUPLICADO (base)';
+
+                    tr.innerHTML = `<td style="padding:6px;border:1px solid #eee">${r.__line||idx+1}</td><td style="padding:6px;border:1px solid #eee">${r.cliente||''}</td><td style="padding:6px;border:1px solid #eee">${r.descripcion||''}</td><td style="padding:6px;border:1px solid #eee">${r.unidad||r.u||''}</td><td style="padding:6px;border:1px solid #eee">${r.cantidad}</td><td style="padding:6px;border:1px solid #eee">${r.costo}</td><td style="padding:6px;border:1px solid #eee">${(r.tipo||'').toString().toUpperCase()}</td><td style="padding:6px;border:1px solid #eee">${r.proveedor||''}</td><td style="padding:6px;border:1px solid #eee">${estado}</td>`;
+                    if (estado.startsWith('ERROR')) tr.style.background = '#ffe9e9';
+                    else if (estado.includes('DUPLICADO')) tr.style.background = '#fff7e6';
+                    body.appendChild(tr);
+                } else {
+                    const issuesLocal = [];
+                    if (!r.project_id || String(r.project_id).trim()==='') issuesLocal.push('project_id faltante');
+                    if (!r.n || String(r.n).trim()==='') issuesLocal.push('nombre faltante');
+                    if (isNaN(Number(r.cantidad))) issuesLocal.push('cantidad no numérica');
+                    if (Number(r.cantidad) < 0) issuesLocal.push('cantidad negativa');
+                    if (isNaN(Number(r.precio))) issuesLocal.push('precio no numérico');
+                    if (Number(r.precio) < 0) issuesLocal.push('precio negativo');
+                    if ((r.subtotal === null || r.subtotal === undefined) && !isNaN(Number(r.precio)) && !isNaN(Number(r.cantidad))) {
+                        r.subtotal = Number(r.precio) * Number(r.cantidad);
+                    }
+                    const internalKey = `${r.project_id}::${(r.n||'').toString().trim().toLowerCase()}::${(r.u||'').toString().trim().toLowerCase()}::${Number(r.precio)||0}`;
+                    const dupInternalLocal = seenInternal.has(internalKey);
+                    seenInternal.add(internalKey);
+                    const dupExistingLocal = isDuplicateAgainstExisting(r);
+                    let estadoLocal = 'OK';
+                    if (issuesLocal.length>0) estadoLocal = 'ERROR: ' + issuesLocal.join('; ');
+                    else if (dupInternalLocal) estadoLocal = 'DUPLICADO (archivo)';
+                    else if (dupExistingLocal) estadoLocal = 'DUPLICADO (base)';
+                    tr.innerHTML = `<td style="padding:6px;border:1px solid #eee">${r.__line||idx+1}</td><td style="padding:6px;border:1px solid #eee">${r.project_id}</td><td style="padding:6px;border:1px solid #eee">${r.n}</td><td style="padding:6px;border:1px solid #eee">${r.u}</td><td style="padding:6px;border:1px solid #eee">${r.cantidad}</td><td style="padding:6px;border:1px solid #eee">${r.precio}</td><td style="padding:6px;border:1px solid #eee">${r.subtotal===null?'-':r.subtotal}</td><td style="padding:6px;border:1px solid #eee">${estadoLocal}</td>`;
+                    if (estadoLocal.startsWith('ERROR')) tr.style.background = '#ffe9e9';
+                    else if (estadoLocal.includes('DUPLICADO')) tr.style.background = '#fff7e6';
+                    body.appendChild(tr);
+                }
+            });
+
+            table.appendChild(body);
+            container.appendChild(table);
+            document.getElementById('importPreviewModal').classList.remove('hidden');
+            document.getElementById('importPreviewModal').classList.add('flex');
+        }
+
+        function closeImportPreview(){
+            document.getElementById('importPreviewModal').classList.add('hidden');
+            document.getElementById('importPreviewModal').classList.remove('flex');
+            __lastParsedRenglones = [];
+        }
+
+        function getPreferredRenglonesKey(){
+            return localStorage.getItem('RENGLONES_KEY_PREFERENCE') || 'renglones_base';
+        }
+
+        function confirmImportAction(){
+            const target = document.querySelector('input[name="importTarget"]:checked').value;
+            const tipo = document.getElementById('importMergeTipo').value || 'residencial';
+            const skipInvalid = !!document.getElementById('skipInvalidRows') && document.getElementById('skipInvalidRows').checked;
+            const skipDup = !!document.getElementById('skipDuplicates') && document.getElementById('skipDuplicates').checked;
+            if (!__lastParsedRenglones || __lastParsedRenglones.length===0) { wmToast('No hay datos para importar.'); return; }
+
+            // aplicar mapeo si el usuario seleccionó columnas en el modal
+            try {
+                const parsed = __lastParsedRenglonesParsed;
+                if (parsed && parsed.header && parsed.header.length > 0) {
+                    const expectedFields = ['project_id','index','n','u','cantidad','precio','subtotal'];
+                    const headerArr = parsed.header;
+                    // construir mapping desde selects (map_<field>)
+                    const mapping = {};
+                    expectedFields.forEach(f => {
+                        const sel = document.getElementById('map_' + f);
+                        if (sel && sel.value && sel.value !== '--ninguno--') mapping[f] = sel.value;
+                    });
+                    if (Object.keys(mapping).length > 0) {
+                        // remap cada parsed row using original parts
+                        __lastParsedRenglones.forEach(r => {
+                            if (!r.__parts) return;
+                            for (let f of expectedFields) {
+                                if (!mapping[f]) continue;
+                                const colName = mapping[f];
+                                const idx = headerArr.indexOf(colName);
+                                if (idx >= 0 && r.__parts[idx] !== undefined) {
+                                    const raw = r.__parts[idx];
+                                    if (f === 'cantidad' || f === 'precio' || f === 'subtotal') {
+                                        const v = parseFloat(String(raw).replace(/[^0-9.,-]/g,'').replace(/,/g, '.'));
+                                        r[f] = isNaN(v) ? (r[f] || 0) : v;
+                                    } else {
+                                        r[f] = raw;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch(e){ console.warn('Error aplicando mapping:', e); }
+
+            // preparar detecciones
+            const key = getPreferredRenglonesKey();
+            let baseObj = {};
+            try { baseObj = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){ baseObj = {}; }
+            const customObj = JSON.parse(localStorage.getItem('wm_custom_renglones') || '{}');
+
+            function isDuplicateExisting(r) {
+                const lists = [];
+                Object.keys(baseObj||{}).forEach(t => { (baseObj[t]||[]).forEach(it => lists.push(it)); });
+                const customList = customObj[r.project_id] || [];
+                customList.forEach(it=>lists.push(it));
+                for (let it of lists) {
+                    try {
+                        const sameName = (it.n||'').toString().trim().toLowerCase() === (r.n||'').toString().trim().toLowerCase();
+                        const sameU = (it.u||'').toString().trim().toLowerCase() === (r.u||'').toString().trim().toLowerCase();
+                        const pIt = Number(it.p||it.precio||it.price||0);
+                        const pR = Number(r.precio||0);
+                        const priceClose = Math.abs(pIt - pR) < 0.01;
+                        if (sameName && sameU && priceClose) return true;
+                    } catch(e){}
+                }
+                return false;
+            }
+
+            const finalRows = [];
+            const seenInternal = new Set();
+            let skippedInvalid = 0, skippedDup = 0;
+            __lastParsedRenglones.forEach(r => {
+                const issues = [];
+                if (!r.project_id || String(r.project_id).trim()==='') issues.push('project_id faltante');
+                if (!r.n || String(r.n).trim()==='') issues.push('nombre faltante');
+                if (isNaN(Number(r.cantidad))) issues.push('cantidad no numérica');
+                if (Number(r.cantidad) < 0) issues.push('cantidad negativa');
+                if (isNaN(Number(r.precio))) issues.push('precio no numérico');
+                if (Number(r.precio) < 0) issues.push('precio negativo');
+                if ((r.subtotal === null || r.subtotal === undefined) && !isNaN(Number(r.precio)) && !isNaN(Number(r.cantidad))) {
+                    r.subtotal = Number(r.precio) * Number(r.cantidad);
+                }
+
+                const internalKey = `${r.project_id}::${(r.n||'').toString().trim().toLowerCase()}::${(r.u||'').toString().trim().toLowerCase()}::${Number(r.precio)||0}`;
+                const dupInternal = seenInternal.has(internalKey);
+                seenInternal.add(internalKey);
+                const dupExisting = isDuplicateExisting(r);
+
+                if (issues.length>0 && skipInvalid) { skippedInvalid++; return; }
+                if ((dupInternal || dupExisting) && skipDup) { skippedDup++; return; }
+                finalRows.push(r);
+            });
+
+            // Si el CSV detectado es de tipo 'finanzas', procesar a wm_finanzas
+            const parsedType = (__lastParsedRenglonesParsed && __lastParsedRenglonesParsed.type) ? __lastParsedRenglonesParsed.type : 'renglones';
+            if (parsedType === 'finanzas') {
+                // Mapear filas a movimientos financieros
+                const finanzas = JSON.parse(localStorage.getItem('wm_finanzas') || '[]');
+                const projects = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || '[]');
+                let added = 0;
+                __lastParsedRenglones.forEach(r => {
+                    // map/normalize fields
+                    const cliente = (r.cliente || r.__parts && (() => {
+                        const idx = (__lastParsedRenglonesParsed.header||[]).map(h=>h.toLowerCase()).findIndex(h=>h.includes('cliente'));
+                        return idx>=0 ? r.__parts[idx] : '';
+                    })() || '').toString().trim();
+                    const desc = (r.descripcion || r.__parts && (() => {
+                        const idx = (__lastParsedRenglonesParsed.header||[]).map(h=>h.toLowerCase()).findIndex(h=>h.includes('descripcion')||h.includes('desc'));
+                        return idx>=0 ? r.__parts[idx] : '';
+                    })() || '').toString().trim();
+                    const cantidad = Number(String(r.cantidad||0).replace(/[^0-9.,-]/g,'').replace(/,/g,'.'))||0;
+                    const costoRaw = String(r.costo||r.precio||'');
+                    const costo = Number(costoRaw.replace(/[^0-9.,-]/g,'').replace(/,/g,'.'))||0;
+                    const tipo = (r.tipo||'').toString().trim().toUpperCase() || ((r.__parts && (__lastParsedRenglonesParsed.header||[]).map(h=>h.toLowerCase()).some(h=>h.includes('tipo'))) ? (r.__parts[(__lastParsedRenglonesParsed.header||[]).map(h=>h.toLowerCase()).findIndex(h=>h.includes('tipo'))]||'') : '');
+                    const categoria = (r.categoria||'').toString().trim();
+                    const fecha = (r.fecha||'').toString().trim();
+                    const proveedor = (r.proveedor||'').toString().trim();
+                    const total = +(cantidad * costo) || costo || 0;
+                    // localizar proyecto por cliente
+                    const foundProject = projects.find(p => (p.cliente||'').toString().trim().toLowerCase() === cliente.toLowerCase());
+                    const proyectoId = foundProject ? foundProject.id : cliente;
+                    // decide skip rules
+                    const issuesRow = [];
+                    if (!cliente) issuesRow.push('cliente faltante');
+                    if (!desc) issuesRow.push('descripcion faltante');
+                    if (isNaN(cantidad)) issuesRow.push('cantidad no numérica');
+                    if (isNaN(costo)) issuesRow.push('costo no numérico');
+                    if (issuesRow.length>0 && skipInvalid) { skippedInvalid++; return; }
+                    // duplicate detection against existing finanzas
+                    const existingFin = finanzas.find(f => (f.cliente||'').toString().trim().toLowerCase()===cliente.toLowerCase() && (f.desc||'').toString().trim().toLowerCase()===desc.toLowerCase() && Math.abs((Number(f.total)||0)-total) < 0.01);
+                    if (existingFin && skipDup) { skippedDup++; return; }
+
+                    const mov = { proyecto: proyectoId, cliente: cliente, desc: desc, cantidad: cantidad, unidad: r.unidad||r.u||'', total: total, costo_unitario: costo, tipo: (tipo||'').toString().toUpperCase(), categoria: categoria, fecha: fecha, proveedor: proveedor };
+                    finanzas.push(mov); added++;
+                });
+                try { localStorage.setItem('wm_finanzas', JSON.stringify(finanzas)); wmToast(`Importados ${added} movimientos financieros (omitidos inválidos ${skippedInvalid}, duplicados ${skippedDup}).`); }
+                catch(e){ wmToast('Error guardando movimientos financieros.'); }
+                closeImportPreview();
+                try { popularSelectProyectosParaCalculadora(); } catch(e){}
+                return;
+            }
+
+            if (finalRows.length === 0) { wmToast('No hay filas válidas para importar después de aplicar filtros.'); return; }
+
+            if (target === 'custom') {
+                let custom = {};
+                try { custom = JSON.parse(localStorage.getItem('wm_custom_renglones') || '{}'); } catch(e){ custom = {}; }
+                finalRows.forEach(r => {
+                    const pid = r.project_id || 'UNKNOWN';
+                    custom[pid] = custom[pid] || [];
+                    custom[pid].push(r);
+                });
+                try { localStorage.setItem('wm_custom_renglones', JSON.stringify(custom)); wmToast(`Importados ${finalRows.length} renglones (omitidos inválidos ${skippedInvalid}, duplicados ${skippedDup}).`); }
+                catch(e){ wmToast('Error guardando renglones personalizados.'); }
+            } else {
+                let base = {};
+                try { base = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){ base = {}; }
+                base[tipo] = base[tipo] || [];
+                finalRows.forEach(r => {
+                    base[tipo].push({ n: r.n || '', u: r.u || '', c: Number(r.cantidad)||0, p: Number(r.precio)||0, m: '' });
+                });
+                try { localStorage.setItem(key, JSON.stringify(base)); wmToast(`Fusionados ${finalRows.length} renglones en '${key}' bajo tipo '${tipo}' (omitidos inválidos ${skippedInvalid}, duplicados ${skippedDup}).`); }
+                catch(e){ wmToast('Error fusionando renglones en base.'); }
+            }
+            closeImportPreview();
+            try { popularSelectProyectosParaCalculadora(); } catch(e){}
+        }
+    </script>
+    <script>
+        /* ---------- Formateo y utilidades de moneda ---------- */
+        function formatCurrency(value, decimals = 2) {
+            const num = Number(value) || 0;
+            // Usar Intl para formato local y luego prefijo 'Q '
+            try {
+                const formatted = num.toLocaleString('es-GT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+                return 'Q ' + formatted;
+            } catch (e) {
+                return 'Q ' + num.toFixed(decimals);
+            }
+        }
+
+        function parseCurrency(str) {
+            if (str === null || str === undefined) return NaN;
+            const s = String(str).trim();
+            // Eliminar prefijos y espacios
+            let clean = s.replace(/[Q\s]/g, '');
+            // Mantener dígitos, puntos y comas
+            clean = clean.replace(/[^0-9.,-]/g, '');
+            // Si contiene '.' y ',' asumir que '.' es separador de miles y ',' decimal
+            if (clean.indexOf('.') !== -1 && clean.indexOf(',') !== -1) {
+                clean = clean.replace(/\./g, '').replace(/,/g, '.');
+            } else if (clean.indexOf(',') !== -1 && clean.indexOf('.') === -1) {
+                // solo coma => coma decimal
+                clean = clean.replace(/,/g, '.');
+            } else {
+                // solo puntos o ninguno -> dejar
+            }
+            const num = Number(clean);
+            return isNaN(num) ? NaN : num;
+        }
+
+        function animateValueChange(el) {
+            if (!el) return;
+            el.classList.add('value-change');
+            setTimeout(() => el.classList.remove('value-change'), 450);
+        }
+
+        // Aplicar formato al establecer costo estimado (usado desde IA y carga)
+        const original_calcularConIA = calcularConIA;
+        async function calcularConIA_wrapped() {
+            await original_calcularConIA();
+            const el = document.getElementById('costo_estimado');
+            const raw = el.value;
+            const n = parseCurrency(raw);
+            el.value = isNaN(n) ? raw : formatCurrency(n, 2);
+            animateValueChange(el);
+        }
+        // Reemplazar referencia
+        calcularConIA = calcularConIA_wrapped;
+
+        // Al cargar un proyecto, formatear costo
+        const original_loadProject = loadProject;
+        function loadProject_wrapped(id) {
+            original_loadProject(id);
+            const el = document.getElementById('costo_estimado');
+            const n = parseCurrency(el.value);
+            if (!isNaN(n)) el.value = formatCurrency(n, 2);
+            try { showProjectFinanzas(document.getElementById('projectID').innerText); } catch(e){}
+        }
+        loadProject = loadProject_wrapped;
+
+        // Al exportar PDF, mostrar costo formateado
+        const original_exportarPDF = exportarPDF;
+        function exportarPDF_wrapped() {
+            const el = document.getElementById('costo_estimado');
+            const n = parseCurrency(el.value);
+            document.getElementById('p-costo').innerText = isNaN(n) ? el.value : formatCurrency(n, 2);
+            original_exportarPDF();
+        }
+        exportarPDF = exportarPDF_wrapped;
+
+        // Al guardar, almacenar valor numérico (si se puede)
+        const original_saveProject = saveProject;
+        function saveProject_wrapped() {
+            // Extraer número y guardar temporalmente sin formato
+            const el = document.getElementById('costo_estimado');
+            const n = parseCurrency(el.value);
+            if (!isNaN(n)) {
+                // Guardar el valor desformateado y también dejar visual el formateado
+                el.value = formatCurrency(n, 2);
+            }
+            original_saveProject();
+        }
+        saveProject = saveProject_wrapped;
+
+        // Pruebas rápidas UI
+        function simulateFormatTests() {
+            const samples = [0, 12.5, 1234.567, 1234567.89, -3456.7, 'Q 1.234,56', '1500'];
+            const out = document.getElementById('formatTestResults');
+            out.innerHTML = '';
+            for (let s of samples) {
+                const n = parseCurrency(s);
+                const formatted = isNaN(n) ? ('(no num) ' + s) : formatCurrency(n, 2);
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center py-1';
+                const left = document.createElement('div'); left.innerText = String(s);
+                const right = document.createElement('div'); right.innerHTML = '<span class="value-anim">' + formatted + '</span>';
+                row.appendChild(left); row.appendChild(right);
+                out.appendChild(row);
+                animateValueChange(right.querySelector('.value-anim'));
+            }
+        }
+
+        function resetFormatTests(){ document.getElementById('formatTestResults').innerHTML = ''; }
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try { await navigator.serviceWorker.register('./sw.js'); console.info('Service Worker registrado (proyectos)'); }
+                catch(e){ console.warn('SW registration failed (proyectos):', e); }
+            });
+        }
+    </script>
+    <script>
+        // Toggle compact view for visible tables on proyectos page
+        function toggleCompactProjects() {
+            const btn = document.getElementById('compactToggleProjects');
+            const tables = Array.from(document.querySelectorAll('table'));
+            if (!tables.length) return;
+            let anyActive = false;
+            tables.forEach(t => {
+                t.classList.toggle('compact-view');
+                if (t.classList.contains('compact-view')) anyActive = true;
+            });
+            if (btn) btn.classList.toggle('active');
+            try { localStorage.setItem('projects_compact_view', anyActive ? '1' : '0'); } catch(e){}
+        }
+
+        // Apply persisted state
+        try {
+            if (localStorage.getItem('projects_compact_view') === '1') {
+                const t = Array.from(document.querySelectorAll('table'));
+                t.forEach(tab => tab.classList.add('compact-view'));
+                const b = document.getElementById('compactToggleProjects'); if (b) b.classList.add('active');
+            }
+        } catch(e){}
+        // Observe newly added tables and apply compact-view if user enabled it
+        (function observeTablesForCompactProjects(){
+            try{
+                const enabled = localStorage.getItem('projects_compact_view') === '1';
+                if (!enabled) return;
+                const applyToNode = (node) => {
+                    if (!node) return;
+                    if (node.tagName === 'TABLE') node.classList.add('compact-view');
+                    if (node.querySelectorAll) node.querySelectorAll('table').forEach(t=>t.classList.add('compact-view'));
+                };
+                document.querySelectorAll('table').forEach(t=>t.classList.add('compact-view'));
+                const mo = new MutationObserver(muts=>{
+                    muts.forEach(m=>{ m.addedNodes && m.addedNodes.forEach(n=>{ if (n.nodeType===1) applyToNode(n); }); });
+                });
+                mo.observe(document.body, { childList: true, subtree: true });
+            } catch(e){}
+        })();
     </script>
 </body>
 </html>

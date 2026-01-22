@@ -1,0 +1,4 @@
+id,nombre,tipo,m2,fecha,total,totalNumber,cubierta,cliente,ubi,at,ac,tiempo,timestamp
+PROY-1674000000,"Casa Bosques",residencial,120,2026-01-22,"Q 150.000,00",150000,LOSA SOLIDA,"Familia Pérez","14.634200,-90.513400",500,120,"90 días","2026-01-22T10:00:00Z"
+PROY-1674001000,"Edificio Central",comercial,850,2026-01-10,"Q 2.850.000,00",2850000,TEJA,"Constructora ABC","14.640000,-90.520000",2000,850,"365 días","2026-01-10T09:30:00Z"
+PROY-1674002000,"Bodega Norte",industrial,2400,2025-12-15,"Q 5.760.000,00",5760000,ESTRUCTURA METALICA,"Logística S.A.","14.650000,-90.540000",8000,2400,"180 días","2025-12-15T08:15:00Z"

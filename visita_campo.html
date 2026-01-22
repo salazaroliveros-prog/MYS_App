@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WM/M&S - Gestión de Campo</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <meta name="theme-color" content="#00447C">
     <!-- Tailwind para diseño -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- html2pdf para exportación -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="css/common-responsive.css">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
@@ -74,8 +78,27 @@
             background-color: rgba(204, 172, 0, 0.1);
             cursor: pointer;
         }
+
+        /* Responsive fine-tune for small devices */
+        @media (max-width: 768px) {
+            .header-bg .max-w-7xl { padding: 0 12px; }
+            header img { height: 48px; }
+            .leading-tight h1 { font-size: 1.15rem; }
+            .text-right { display:none; }
+            .page-fade { padding: 12px; }
+            #mainSearch { font-size: 1rem; padding: 10px; }
+        }
+
+        @media (max-width: 420px) {
+            header img { height: 40px; }
+            .leading-tight h1 { font-size: 1rem; }
+            .grid-cols-1 { grid-template-columns: 1fr; }
+            .w-full.max-w-2xl { max-width: 100%; padding: 0 10px; }
+            .btn { width: 100%; }
+        }
     </style>
     <script src="wm_toast.js"></script>
+    <script> (function(){ var s=document.createElement('script'); s.src='js/common-responsive.js'; document.head.appendChild(s); })(); </script>
 </head>
 <body class="min-h-screen flex flex-col">
 
@@ -83,7 +106,8 @@
     <header class="header-bg p-4 md:p-6 text-white shadow-2xl z-50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <button onclick="showPage('inicio')" class="p-2 hover:bg-white/10 rounded-full transition-colors" title="Ir a Inicio">
+                <img src="logo.png" alt="Logo CONSTRUCTORA WM/M&S" style="height:56px;max-width:100%;width:auto;object-fit:contain;margin-right:6px">
+                <button onclick="location.href='index.html'" class="p-2 hover:bg-white/10 rounded-full transition-colors" title="Ir a Inicio">
                     <i data-lucide="home" class="mostaza-text w-6 h-6 md:w-8 md:h-8"></i>
                 </button>
                 <div class="leading-tight">
@@ -98,6 +122,16 @@
             <div class="text-right hidden sm:block">
                 <div id="clock-date" class="text-[10px] font-bold uppercase text-gray-400 mb-1"></div>
                 <div id="clock-time" class="text-lg md:text-2xl font-black mostaza-text"></div>
+            </div>
+            <div style="margin-left:12px; display:flex; align-items:center; gap:8px;">
+                <div class="wm-tooltip">
+                    <button id="globalCompactBtnVis" class="compact-toggle-global" onclick="syncCompactGlobal()">🌐 Compacta Global</button>
+                    <div class="wm-tooltip-text">Sincroniza la vista compacta en todas las páginas. Oculta columnas secundarias y hace las tablas más legibles en pantallas pequeñas.</div>
+                </div>
+                <div class="wm-tooltip">
+                    <button id="configCompactVis" class="compact-toggle-global" onclick="openCompactConfig()">⚙️ Config</button>
+                    <div class="wm-tooltip-text">Configurar qué columnas se ocultan en la Vista Compacta para esta página.</div>
+                </div>
             </div>
         </div>
     </header>
@@ -115,7 +149,9 @@
                 <p class="text-gray-500 text-sm">Busque un proyecto existente o cree uno nuevo</p>
             </div>
             <div style="margin-top:12px; display:flex; gap:8px; width:100%; max-width:600px;">
-                <button onclick="location.href='inicio.html'" class="p-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl" style="flex:1;">← Volver a Inicio</button>
+                <button onclick="location.href='index.html'" class="btn btn-nav">
+                    <i class="fas fa-home"></i> Volver a inicio
+                </button>
                 <button onclick="location.href='calculadora.html'" class="p-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl" style="flex:1;">Ir a Calculadora →</button>
                 <button onclick="location.href='proyectos.html'" class="p-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white rounded-xl" style="flex:1;">Ir a Proyectos</button>
             </div>
@@ -191,6 +227,39 @@
                                     </button>
                                 </div>
                             </div>
+                            <div>
+                                <label class="label-style">Departamento (detectado/manual)</label>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <select id="departamento" class="form-input" title="Departamento">
+                                        <option value="">-- Detectar automáticamente --</option>
+                                        <option>Guatemala</option>
+                                        <option>Sacatepéquez</option>
+                                        <option>Chimaltenango</option>
+                                        <option>Escuintla</option>
+                                        <option>Quetzaltenango</option>
+                                        <option>Suchitepéquez</option>
+                                        <option>Alta Verapaz</option>
+                                        <option>Baja Verapaz</option>
+                                        <option>Jalapa</option>
+                                        <option>Jutiapa</option>
+                                        <option>Petén</option>
+                                        <option>Izabal</option>
+                                        <option>Huehuetenango</option>
+                                        <option>Quiché</option>
+                                        <option>Chiquimula</option>
+                                        <option>Sololá</option>
+                                        <option>Retalhuleu</option>
+                                        <option>Santa Rosa</option>
+                                        <option>El Progreso</option>
+                                        <option>Totonicapán</option>
+                                        <option>San Marcos</option>
+                                        <option>Sacatepéquez</option>
+                                        <option>Zacapa</option>
+                                    </select>
+                                    <button type="button" onclick="downloadParamsForLocation()" class="p-2 bg-blue-800 text-white rounded-xl">Descargar parámetros</button>
+                                </div>
+                                <small class="text-gray-500">Si tiene GPS, el departamento será detectado automáticamente y se descargarán parámetros regionales.</small>
+                            </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="label-style">Área Terreno (m²)</label>
@@ -228,6 +297,29 @@
                                     <div>
                                         <label class="label-style text-green-700">Plazo de Ejecución</label>
                                         <input type="text" id="duracion_estimada" class="form-input font-black text-gray-800" readonly title="Plazo Estimado">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Configuración de endpoints y precarga de parámetros -->
+                            <div class="bg-white p-4 rounded-xl border mt-4">
+                                <label class="label-style">Configuración de Parámetros (opcional)</label>
+                                <div style="display:flex;gap:8px;flex-direction:column;">
+                                    <div>
+                                        <small class="text-gray-600">Endpoint público para parámetros (WM_PARAMS_ENDPOINT). Puede apuntar a un JSON global o a archivos por departamento.</small>
+                                        <input id="wm_params_endpoint_input" class="form-input" placeholder="https://mi-servidor.com/params.json o https://mi-servidor.com/params" />
+                                        <div style="display:flex;gap:8px;margin-top:6px;">
+                                            <button onclick="saveParamsEndpoint()" class="p-2 bg-green-700 text-white rounded-xl">Guardar endpoint</button>
+                                            <button onclick="preloadAllParams()" class="p-2 bg-blue-800 text-white rounded-xl">Pre-cargar parámetros (todos)</button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <small class="text-gray-600">Endpoint para sincronizar parámetros recolectados (WM_PARAMS_SYNC_URL)</small>
+                                        <input id="wm_params_sync_input" class="form-input" placeholder="https://mi-backend.com/sync-params" />
+                                        <div style="display:flex;gap:8px;margin-top:6px;">
+                                            <button type="button" onclick="saveSyncEndpoint()" class="p-2 bg-yellow-700 text-white rounded-xl">Guardar sync URL</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -426,6 +518,16 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
                     document.getElementById('ubicacion').value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+                    // intentar detectar departamento y aplicar parámetros automáticamente
+                    (async ()=>{
+                        const dept = await deriveDepartmentFromCoords(document.getElementById('ubicacion').value);
+                        if (dept) {
+                            try { document.getElementById('departamento').value = dept; } catch(e){}
+                            // aplicar parámetros locales si existen
+                            const params = getParamsForSelectedDepartment();
+                            if (params) applyParamsAndCalculate(params);
+                        }
+                    })();
                 }, () => wmToast("Error al obtener GPS."));
             }
         }
@@ -473,6 +575,239 @@
         // abrir calculadora
         location.href = 'calculadora.html';
     }
+
+    /* ------------------ Parámetros por Departamento y Cálculo ------------------ */
+    // Valores por defecto (fallback) para departamentos y multiplicadores por tipo de cubierta
+    const DEFAULT_PARAMS = {
+        // ejemplo mínimo, puede ampliarse o descargarse desde un endpoint público
+        "Guatemala": {
+            baseCostPerM2: 4200, // Q por m2 aproximado (ejemplo)
+            productivityM2PerDay: { "LOSA SOLIDA": 18, "LOSA PREFABRICADA": 35, "ESTRUCTURA METALICA": 22, "PERGOLA": 40, "TEJA": 30 },
+            roofMultiplier: { "LOSA SOLIDA": 1.0, "LOSA PREFABRICADA": 0.95, "ESTRUCTURA METALICA": 1.1, "PERGOLA": 0.85, "TEJA": 1.05 }
+        },
+        "Quetzaltenango": { baseCostPerM2: 3800, productivityM2PerDay: { "LOSA SOLIDA": 16, "LOSA PREFABRICADA": 33, "ESTRUCTURA METALICA": 20, "PERGOLA": 38, "TEJA": 28 }, roofMultiplier: { "LOSA SOLIDA": 1.0, "LOSA PREFABRICADA": 0.95, "ESTRUCTURA METALICA": 1.08, "PERGOLA": 0.9, "TEJA": 1.02 } },
+        "Escuintla": { baseCostPerM2: 3500, productivityM2PerDay: { "LOSA SOLIDA": 20, "LOSA PREFABRICADA": 36, "ESTRUCTURA METALICA": 24, "PERGOLA": 45, "TEJA": 32 }, roofMultiplier: { "LOSA SOLIDA": 0.98, "LOSA PREFABRICADA": 0.94, "ESTRUCTURA METALICA": 1.05, "PERGOLA": 0.88, "TEJA": 1.00 } }
+    };
+
+    // Intenta detectar departamento desde coordenadas usando Nominatim (OpenStreetMap)
+    async function deriveDepartmentFromCoords(coords) {
+        if (!coords) return null;
+        try {
+            const [lat, lon] = coords.split(',').map(s => s.trim());
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+            const r = await fetch(url, { headers: { 'User-Agent': 'WM-Calculator/1.0 (contacto)' } });
+            const data = await r.json();
+            // buscar admin district/state
+            const dept = data.address && (data.address.state || data.address.county || data.address.region);
+            return dept || null;
+        } catch (e) { console.warn('Reverse geocode failed', e); return null; }
+    }
+
+    // Descargar parámetros por departamento (intenta endpoint remoto, si falla usa DEFAULT_PARAMS)
+    async function downloadParamsForLocation() {
+        const depEl = document.getElementById('departamento');
+        let departamento = depEl && depEl.value ? depEl.value : '';
+        const ubic = document.getElementById('ubicacion').value || '';
+
+        if (!departamento && ubic.includes(',')) {
+            const detected = await deriveDepartmentFromCoords(ubic);
+            if (detected) {
+                departamento = detected;
+                // intentar seleccionar si existe en lista
+                try { depEl.value = departamento; } catch(e){}
+            }
+        }
+
+        if (!departamento) { wmToast('No se detectó departamento. Seleccione manualmente.'); return; }
+
+        document.getElementById('loader-text').innerText = `DESCARGANDO PARÁMETROS PARA ${departamento.toUpperCase()}...`;
+        document.getElementById('loader').classList.remove('hidden');
+
+        // Endpoint configurable (por si el usuario tiene un repositorio con params JSON)
+        const remoteUrl = localStorage.getItem('WM_PARAMS_ENDPOINT') || '';
+        try {
+            let params = null;
+            if (remoteUrl) {
+                const resp = await fetch(`${remoteUrl.replace(/\/$/, '')}/${encodeURIComponent(departamento)}.json`);
+                if (resp.ok) params = await resp.json();
+            }
+            if (!params) {
+                // intentar buscar en un JSON global remoto
+                if (remoteUrl) {
+                    const resp2 = await fetch(remoteUrl);
+                    if (resp2.ok) {
+                        const all = await resp2.json();
+                        params = all[departamento] || all[departamento.toLowerCase()] || null;
+                    }
+                }
+            }
+            if (!params) {
+                // fallback local
+                params = DEFAULT_PARAMS[departamento] || DEFAULT_PARAMS['Guatemala'];
+            }
+
+            // guardar en DB local de parámetros
+            const db = JSON.parse(localStorage.getItem('WM_PARAMS_DB') || '{}');
+            db[departamento] = params;
+            localStorage.setItem('WM_PARAMS_DB', JSON.stringify(db));
+
+            // aplicar parámetros y calcular
+            applyParamsAndCalculate(params);
+
+            // intentar sincronizar parámetros a la nube (si endpoint de sincronización configurado)
+            try { await syncParamsToCloud(departamento, params); } catch(e){ console.warn('sync cloud failed', e); }
+
+            wmToast('Parámetros descargados y aplicados (local).');
+        } catch (e) {
+            console.warn(e);
+            wmToast('Error descargando parámetros; se aplicaron valores por defecto.');
+        } finally {
+            document.getElementById('loader').classList.add('hidden');
+        }
+    }
+
+    // Obtener parámetros desde WM_PARAMS_DB o DEFAULT_PARAMS para el departamento seleccionado
+    function getParamsForSelectedDepartment() {
+        try {
+            const dep = (document.getElementById('departamento') && document.getElementById('departamento').value) || '';
+            const db = JSON.parse(localStorage.getItem('WM_PARAMS_DB') || '{}');
+            if (dep && db[dep]) return db[dep];
+            if (dep && DEFAULT_PARAMS[dep]) return DEFAULT_PARAMS[dep];
+            return DEFAULT_PARAMS['Guatemala'];
+        } catch (e) { console.warn('getParamsForSelectedDepartment error', e); return DEFAULT_PARAMS['Guatemala']; }
+    }
+
+    // Auto-calcula usando parámetros locales cuando cambian inputs clave
+    function autoCalculate() {
+        try {
+            const params = getParamsForSelectedDepartment();
+            if (!params) return;
+            applyParamsAndCalculate(params);
+        } catch (e) { console.warn('autoCalculate error', e); }
+    }
+
+    // Registrar listeners para recalculo automático
+    try {
+        const areaEl = document.getElementById('area_construir');
+        const tipoEl = document.getElementById('tipo_cubierta');
+        const depEl = document.getElementById('departamento');
+        if (areaEl) areaEl.addEventListener('input', () => { setTimeout(autoCalculate, 200); });
+        if (tipoEl) tipoEl.addEventListener('change', autoCalculate);
+        if (depEl) depEl.addEventListener('change', autoCalculate);
+    } catch(e) { /* ignore */ }
+
+    function applyParamsAndCalculate(params) {
+        if (!params) return;
+        const area = parseFloat(document.getElementById('area_construir').value) || 0;
+        const tipo = (document.getElementById('tipo_cubierta').value || '').toUpperCase();
+
+        const base = Number(params.baseCostPerM2) || 0;
+        const roofMult = (params.roofMultiplier && params.roofMultiplier[tipo]) ? Number(params.roofMultiplier[tipo]) : 1;
+        const costPerM2 = base * roofMult;
+
+        // tiempo en dias = area / productividad
+        const prod = (params.productivityM2PerDay && params.productivityM2PerDay[tipo]) ? Number(params.productivityM2PerDay[tipo]) : 20;
+        const dias = prod > 0 ? Math.ceil(area / prod) : 0;
+
+        const costoTotal = Number((costPerM2 * area).toFixed(2));
+
+        document.getElementById('costo_estimado').value = `Q ${costoTotal.toLocaleString()} (Q ${costPerM2.toLocaleString()} / m²)`;
+        document.getElementById('duracion_estimada').value = `${dias} días`;
+
+        // Guardar directamente en el proyecto actual (si existe) para que calculadora lo lea
+        const id = document.getElementById('projectID').innerText || ('PROY-' + Date.now());
+        const projects = JSON.parse(localStorage.getItem('WM_PROJECTS_DB') || '[]');
+        const idx = projects.findIndex(p => p.id === id);
+        const rec = {
+            id,
+            cliente: document.getElementById('nombre_cliente').value,
+            proyecto: document.getElementById('nombre_proyecto').value,
+            ubi: document.getElementById('ubicacion').value,
+            departamento: document.getElementById('departamento').value || '',
+            at: document.getElementById('area_terreno').value,
+            ac: document.getElementById('area_construir').value,
+            cubierta: document.getElementById('tipo_cubierta').value,
+            costo: document.getElementById('costo_estimado').value,
+            tiempo: document.getElementById('duracion_estimada').value,
+            params: params,
+            fecha: document.getElementById('fecha_manual').value || new Date().toLocaleDateString(),
+            timestamp: new Date().toISOString()
+        };
+        if (idx > -1) projects[idx] = rec; else projects.push(rec);
+        localStorage.setItem('WM_PROJECTS_DB', JSON.stringify(projects));
+
+        // also write WM_OPEN_PROJECT so Calculadora can pick it up on next load
+        try { localStorage.setItem('WM_OPEN_PROJECT', JSON.stringify({ origin: 'visita_campo', proyecto: rec.proyecto, ubicacion: rec.ubi, ac: rec.ac, tipo: rec.cubierta })); } catch(e){}
+    }
+
+    // Stub: sincronizar parámetros a la nube — el usuario debe configurar `WM_PARAMS_SYNC_URL` en localStorage
+    async function syncParamsToCloud(departamento, params) {
+        const endpoint = localStorage.getItem('WM_PARAMS_SYNC_URL') || '';
+        if (!endpoint) return; // no configurado
+        try {
+            await fetch(endpoint, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ departamento, params, source: 'visita_campo', timestamp: new Date().toISOString() }) });
+        } catch (e) { console.warn('Cloud sync failed', e); }
+    }
+
+    // Guardar endpoints desde la UI
+    function saveParamsEndpoint() {
+        const v = document.getElementById('wm_params_endpoint_input').value.trim();
+        if (!v) { wmToast('Ingrese una URL válida para el endpoint.'); return; }
+        localStorage.setItem('WM_PARAMS_ENDPOINT', v);
+        wmToast('Endpoint de parámetros guardado.');
+    }
+
+    function saveSyncEndpoint() {
+        const v = document.getElementById('wm_params_sync_input').value.trim();
+        if (!v) { wmToast('Ingrese una URL válida para sincronización.'); return; }
+        localStorage.setItem('WM_PARAMS_SYNC_URL', v);
+        wmToast('URL de sincronización guardada.');
+    }
+
+    // Pre-cargar parámetros para una lista de departamentos y guardarlos en WM_PARAMS_DB
+    async function preloadAllParams() {
+        const remoteUrl = localStorage.getItem('WM_PARAMS_ENDPOINT') || '';
+        const deptOptions = Array.from(document.querySelectorAll('#departamento option')).map(o => o.value).filter(Boolean);
+        const defaultKeys = Object.keys(DEFAULT_PARAMS || {});
+        const departments = Array.from(new Set([...deptOptions, ...defaultKeys]));
+
+        if (departments.length === 0) { wmToast('No se encontraron departamentos para precargar.'); return; }
+
+        document.getElementById('loader-text').innerText = 'PRECARGANDO PARÁMETROS...';
+        document.getElementById('loader').classList.remove('hidden');
+
+        const db = JSON.parse(localStorage.getItem('WM_PARAMS_DB') || '{}');
+        for (const departamento of departments) {
+            try {
+                let params = null;
+                if (remoteUrl) {
+                    // intentar archivo específico
+                    try {
+                        const r1 = await fetch(`${remoteUrl.replace(/\/$/, '')}/${encodeURIComponent(departamento)}.json`);
+                        if (r1.ok) params = await r1.json();
+                    } catch(e) { /* ignore */ }
+                    // intentar JSON global
+                    if (!params) {
+                        try {
+                            const r2 = await fetch(remoteUrl);
+                            if (r2.ok) {
+                                const all = await r2.json();
+                                params = all[departamento] || all[departamento.toLowerCase()] || null;
+                            }
+                        } catch(e) { /* ignore */ }
+                    }
+                }
+                if (!params) params = DEFAULT_PARAMS[departamento] || DEFAULT_PARAMS['Guatemala'];
+                db[departamento] = params;
+            } catch (e) {
+                console.warn('precarga error', departamento, e);
+            }
+        }
+        localStorage.setItem('WM_PARAMS_DB', JSON.stringify(db));
+        document.getElementById('loader').classList.add('hidden');
+        wmToast('Precarga completada.');
+    }
+
 
         // Sincronización Google
         async function syncGoogle() {
@@ -536,5 +871,13 @@
         tick();
 
     </script>
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', async () => {
+                    try { await navigator.serviceWorker.register('./sw.js'); console.info('Service Worker registrado (visita_campo)'); }
+                    catch(e){ console.warn('SW registration failed (visita_campo):', e); }
+                });
+            }
+        </script>
 </body>
 </html>

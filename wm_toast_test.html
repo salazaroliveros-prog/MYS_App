@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WM Toast Test</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#00447C">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body{font-family:Segoe UI,Arial,sans-serif;background:#f3f4f6;padding:28px}
@@ -13,6 +16,13 @@
   </style>
 </head>
 <body>
+  <header style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <img src="logo.png" alt="Logo CONSTRUCTORA WM/M&S" style="height:56px;max-width:100%;width:auto;object-fit:contain">
+    <div>
+      <h1 style="margin:0;font-size:1.1rem;color:#00447C">SOFTCON-MYS-CONSTRU-WM</h1>
+      <div style="font-size:0.85rem;color:#666">CONSTRUYENDO TU FUTURO</div>
+    </div>
+  </header>
   <div class="wrap">
     <h2>Prueba de wm_toast.js</h2>
     <p>Este archivo carga <code>wm_toast.js</code> y muestra varios botones para comprobar los toasts.</p>
@@ -45,6 +55,14 @@
         window.wmToast = saved;
       }catch(e){ console.warn(e); }
     });
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try { await navigator.serviceWorker.register('./sw.js'); console.info('Service Worker registrado (wm_toast_test)'); }
+        catch(e){ console.warn('SW registration failed (wm_toast_test):', e); }
+      });
+    }
   </script>
 </body>
 </html>

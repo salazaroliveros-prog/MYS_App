@@ -1,0 +1,46 @@
+Presupuesto Maestro 2026: Construcción Residencial Guatemala;;;;;
+;;;;;
+Nota: Los precios son referenciales para el área central. En departamentos alejados, el flete puede variar los costos un 5-8%.;;;;;
+;;;;;
+No.;Renglón de Trabajo;Unidad;Rendimiento (MO/Día);Rendimiento Material (Ref);Costo Directo Est. (Q)
+1;PRELIMINARES;;;;
+1.1;Limpieza y Chapeo;$m^2$;25;Herramienta menor;Q12.00
+1.2;Trazo y Niveles;$m^2$;45;Cal, madera, hilos;Q18.00
+1.3;Bodega y Guardianía;Global;1;Parales, lámina, clavos;Q4,500.00
+2;MOVIMIENTO TIERRAS;;;;
+2.4;Excavación Cimiento Corrido;$m^3$;4;Suelo semiduro (manual);Q95.00
+2.5;Relleno de Selecto (Comp.);$m^3$;7;1.25 $m^3$ suelto x $1m^3$;Q220.00
+3;CIMENTACIÓN;;;;
+3.6;Cimiento Corrido (0.4x0.2);$ml$;7;Hierro y concreto 3k PSI;Q285.00
+3.7;Levantado Sobrecimiento;$m^2$;13;12.5 blocks x $m^2$;Q145.00
+3.8;Solera Hidrófuga;$ml$;11;Aditivo impermeabilizante;Q130.00
+3.9;Drenaje Pluvial/Negras (PVC);$ml$;15;Tubo PVC + Pegamento;Q115.00
+3.1;Contrapiso (e=0.07m);$m^2$;28;Concreto 2k PSI;Q98.00
+4;ESTRUCTURA;;;;
+4.11;Levantado de Muros (14cm);$m^2$;14;12.5 blocks + cemento;Q155.00
+4.12;Columnas Principales (C1);Unid;3.5;Armado + Fundición;Q450.00
+4.13;Columnas de Amarre (Pines);Unid;8;"Hierro 3/8"" + Concreto";Q190.00
+4.14;Solera Intermedia;$ml$;15;Concreto + Hierro;Q110.00
+4.15;Solera de Corona;$ml$;10;Concreto + Hierro;Q145.00
+4.16;Sillares y Dinteles;$ml$;6;Acero y concreto;Q120.00
+4.17;Encofrado (Obra Falsa);$m^2$;18;Alquiler de parales/madera;Q65.00
+4.18;Losa Vigueta y Bovedilla;$m^2$;15;Prefabricado + Malla;Q320.00
+4.19;Fundición de Losa (Capa);$m^2$;35;Concreto 3k PSI premezclado;Q195.00
+4.2;Viga Estructural;$ml$;4;Refuerzo pesado;Q480.00
+5;ACABADOS;;;;
+5.21;Repello de Muros;$m^2$;20;Arena de río y cemento;Q85.00
+5.22;Cernido (Fino/Plástico);$m^2$;22;Cal hidratada y arena;Q65.00
+5.23;Piso Cerámico (Estándar);$m^2$;11;Pegamix + Sisa;Q165.00
+5.24;Azulejo en Baños;$m^2$;7;Pegamento especial;Q185.00
+5.25;Cielo Falso (Drywall);$m^2$;16;Estructura + Láminas;Q145.00
+5.26;Impermeabilización Losa;$m^2$;40;Manta o líquido 2 manos;Q95.00
+5.27;Pintura Látex (2 manos);$m^2$;45;Sellador + Color;Q45.00
+5.28;Ventanería (Aluminio/V);$m^2$;4;Vidrio 5mm + Siflex;Q750.00
+5.29;Puertas MDF/Madera;Unid;3;Incluye chapa y marco;Q1,250.00
+6;INSTALACIONES;;;;
+6.3;Agua Potable (CPVC);Punto;4;Accesorios y tubería;Q480.00
+6.31;Fuerza Eléctrica (Tomas);Punto;8;Poliducto y cables;Q285.00
+6.32;Iluminación (Lámparas);Punto;10;Cableado y cajas;Q260.00
+6.33;Artefactos Sanitarios;Juego;2;Inodoro, lavabo, accesorios;Q2,200.00
+6.34;Gabinetes de Cocina;$ml$;1;Melamina/Cuarzo (básico);Q1,800.00
+6.35;Limpieza y Entrega;$m^2$;55;Ácidos y limpieza fina;Q25.00
