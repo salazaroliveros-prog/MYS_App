@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WM Toast Test</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body{font-family:Segoe UI,Arial,sans-serif;background:#f3f4f6;padding:28px}
+    .wrap{max-width:700px;margin:40px auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.06)}
+    button{padding:10px 14px;border-radius:8px;border:none;background:#00447C;color:#fff;cursor:pointer;margin-right:8px}
+    .muted{color:#666;font-size:0.95rem;margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Prueba de wm_toast.js</h2>
+    <p>Este archivo carga <code>wm_toast.js</code> y muestra varios botones para comprobar los toasts.</p>
+    <div style="margin-top:12px;">
+      <button id="short">Toast corto (3s)</button>
+      <button id="long">Toast largo (6s)</button>
+      <button id="multi">3 toasts secuenciales</button>
+      <button id="fallback">Forzar fallback (alert)</button>
+    </div>
+    <div class="muted">Nota: abre la consola (F12) si no ves toasts.</div>
+  </div>
+
+  <script src="wm_toast.js"></script>
+  <script>
+    document.getElementById('short').addEventListener('click', ()=> wmToast('Mensaje corto (3s)'));
+    document.getElementById('long').addEventListener('click', ()=> wmToast('Mensaje largo (6s)', 6000));
+    document.getElementById('multi').addEventListener('click', ()=>{
+      wmToast('Primer toast', 1600);
+      setTimeout(()=> wmToast('Segundo toast', 1600), 600);
+      setTimeout(()=> wmToast('Tercero toast', 1600), 1200);
+    });
+    // fallback test: temporarily remove wmToast to trigger alert fallback
+    document.getElementById('fallback').addEventListener('click', ()=>{
+      try{
+        const saved = window.wmToast;
+        window.wmToast = null;
+        // try call (will fallback to alert in wm_toast.js implementation)
+        try{ wmToast('Esto debería caer en fallback y usar alert (temporal)'); }catch(e){ alert('FALLBACK: '+(e && e.message || e)); }
+        // restore
+        window.wmToast = saved;
+      }catch(e){ console.warn(e); }
+    });
+  </script>
+</body>
+</html>

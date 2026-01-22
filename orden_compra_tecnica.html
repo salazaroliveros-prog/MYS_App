@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orden de Compra Técnica — WM</title>
+  <style>
+    body{font-family:Segoe UI,Arial,sans-serif;color:#222;margin:0;background:#f4f6f8}
+    .wrap{max-width:1000px;margin:22px auto;background:#fff;padding:18px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    header{display:flex;align-items:center;gap:12px}
+    header img{height:56px}
+    h1{margin:0;font-size:1.25rem;color:#00447C}
+    .meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+    .meta .item{background:#f7f9fb;padding:8px;border-radius:6px;border:1px solid #e9eef4}
+    table{width:100%;border-collapse:collapse;margin-top:14px}
+    th,td{border:1px solid #e2e8ef;padding:10px;text-align:left}
+    th{background:#f0f5fb;color:#00447C}
+    tfoot td{font-weight:bold}
+    .notes{margin-top:14px;background:#fff8e6;border-left:4px solid #ffb300;padding:12px;border-radius:4px}
+    .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    .btn{padding:10px 14px;border-radius:6px;border:none;cursor:pointer}
+    .btn-print{background:#28a745;color:#fff}
+    .btn-close{background:#00447C;color:#fff}
+  </style>
+  </style>
+  <script src="wm_toast.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img src="logo.png.png" alt="Logo">
+      <div>
+        <h1>ORDEN DE COMPRA TÉCNICA — WM PRO</h1>
+        <div style="color:#666;font-size:0.95rem">EMPRESA: SOFTCON-MYS-CONSTRU-WM — "CONSTRUYENDO TU FUTURO"</div>
+      </div>
+    </header>
+
+    <div class="meta">
+      <div class="item">ORDEN: <strong>WM-2026-001</strong></div>
+      <div class="item">FECHA: <strong id="oc-fecha">21/01/2026</strong></div>
+      <div class="item">PROVEEDOR: <strong id="oc-proveedor">[Nombre del Proveedor / Marca]</strong></div>
+      <div class="item">PROYECTO: <strong id="oc-proyecto">[Nombre del Proyecto desde la App]</strong></div>
+    </div>
+
+    <table aria-label="Detalle de la orden">
+      <thead>
+        <tr>
+          <th style="width:8%">CANT</th>
+          <th style="width:8%">UNIDAD</th>
+          <th>DESCRIPCIÓN TÉCNICA</th>
+          <th style="width:16%">COLOR / MARCA</th>
+          <th style="width:12%">PRECIO U.</th>
+          <th style="width:12%">SUBTOTAL</th>
+        </tr>
+      </thead>
+      <tbody id="oc-body">
+        <tr>
+          <td>00</td>
+          <td>Cajas</td>
+          <td>Paneles WPC Exterior (2.90m x 15cm)</td>
+          <td>Teak / Premium</td>
+          <td>Q 0.00</td>
+          <td>Q 0.00</td>
+        </tr>
+        <tr>
+          <td>00</td>
+          <td>Cajas</td>
+          <td>Fachaleta Piedra Cultivada</td>
+          <td>Gris Pizarra</td>
+          <td>Q 0.00</td>
+          <td>Q 0.00</td>
+        </tr>
+        <tr>
+          <td>00</td>
+          <td>Metros</td>
+          <td>Perfil Aluminio p/ LED</td>
+          <td>Anodizado Nat.</td>
+          <td>Q 0.00</td>
+          <td>Q 0.00</td>
+        </tr>
+        <tr>
+          <td>00</td>
+          <td>Sacos</td>
+          <td>Adhesivo Alta Adherencia (Bondex Prem.)</td>
+          <td>Bondex Prem.</td>
+          <td>Q 0.00</td>
+          <td>Q 0.00</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5" style="text-align:right">TOTAL</td>
+          <td id="oc-total">Q 0.00</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="notes">
+      <strong>NOTAS DE ENTREGA:</strong>
+      <ul>
+        <li>Los materiales deben entregarse con embalaje de protección (especialmente WPC).</li>
+        <li>Se requiere ficha técnica de resistencia UV para acabados exteriores.</li>
+        <li>Horario de recepción en obra: 7:00 AM - 4:00 PM.</li>
+      </ul>
+    </div>
+
+    <div style="margin-top:12px;">
+      <h3>💡 Estrategia de Compras para WM</h3>
+      <ol>
+        <li><strong>Regla del 10%</strong>: Pedir 10% extra para WPC y fachaleta por desperdicio en cortes e ingletes.</li>
+        <li><strong>Lote Único</strong>: Asegurar que toda la fachaleta provenga del mismo lote de producción.</li>
+        <li><strong>Accesorios Críticos</strong>: No olvidar Clips de Inicio y Final para WPC.</li>
+      </ol>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+      <button class="btn" style="background:#ffc107;color:#111" onclick="saveOrderToHistory()">💾 Guardar Orden</button>
+      <a class="btn btn-close" href="index.html">Cerrar App</a>
+    </div>
+  </div>
+
+  <script>
+    // Cargar orden pendiente desde localStorage (WM_PENDING_ORDER) o por query params
+    (function loadPendingOrder(){
+      try {
+        const raw = localStorage.getItem('WM_PENDING_ORDER');
+        if (raw) {
+          const o = JSON.parse(raw);
+          if (o.fecha) document.getElementById('oc-fecha').innerText = o.fecha;
+          if (o.proveedor) document.getElementById('oc-proveedor').innerText = o.proveedor;
+          if (o.proyecto) document.getElementById('oc-proyecto').innerText = o.proyecto;
+          if (o.id) {
+            const metaItems = document.querySelectorAll('.meta .item');
+            if (metaItems && metaItems.length>0) metaItems[0].innerHTML = 'ORDEN: <strong>' + o.id + '</strong>';
+          }
+
+          const tbody = document.getElementById('oc-body');
+          tbody.innerHTML = '';
+          let total = 0;
+          (o.items || []).forEach(it => {
+            const precio = Number(it.precio || 0);
+            const cantidad = Number(it.cantidad || 0);
+            const subtotal = Math.round((precio * cantidad + Number.EPSILON) * 100) / 100;
+            total += subtotal;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${cantidad}</td><td>${it.unidad || ''}</td><td>${it.descripcion || ''}</td><td>${it.marca || ''}</td><td>Q ${precio.toFixed(2)}</td><td>Q ${subtotal.toFixed(2)}</td>`;
+            tbody.appendChild(tr);
+          });
+          document.getElementById('oc-total').innerText = 'Q ' + (Math.round((total + Number.EPSILON) * 100) / 100).toFixed(2);
+          // opcional: dejar la orden en localStorage como histórico; por ahora la mantenemos para que el usuario la revise
+        } else {
+          // si no hay pendiente, intentar cargar desde query params
+          const q = new URLSearchParams(location.search);
+          if (q.get('proveedor')) document.getElementById('oc-proveedor').innerText = q.get('proveedor');
+          if (q.get('proyecto')) document.getElementById('oc-proyecto').innerText = q.get('proyecto');
+          if (q.get('orden')) {
+            const metaItems = document.querySelectorAll('.meta .item');
+            if (metaItems && metaItems.length>0) metaItems[0].innerHTML = 'ORDEN: <strong>' + q.get('orden') + '</strong>';
+          }
+        }
+      } catch(e){ console.warn('loadPendingOrder error', e); }
+    })();
+
+    function saveOrderToHistory(){
+      try{
+        const raw = localStorage.getItem('WM_PENDING_ORDER');
+        if (!raw) { wmToast('No hay orden pendiente para guardar.'); return; }
+        const o = JSON.parse(raw);
+        const historial = JSON.parse(localStorage.getItem('oc_history') || '[]');
+        // Añadir campo savedAt y calcular total si hace falta
+        o.savedAt = new Date().toISOString();
+        if (!o.total || Number(o.total) === 0){
+          let total = 0;
+          (o.items || []).forEach(it => { total += (Number(it.precio||0) * Number(it.cantidad||0)); });
+          o.total = Math.round((total + Number.EPSILON) * 100) / 100;
+        }
+
+        // Intentar generar PDF y guardarlo como data URL
+        try {
+          if (window.jspdf && window.jspdf.jsPDF) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            let y = 40;
+            doc.setFontSize(14);
+            doc.text('ORDEN DE COMPRA TÉCNICA - ' + (o.id || ''), 40, y); y += 20;
+            doc.setFontSize(10);
+            doc.text('Empresa: SOFTCON-MYS-CONSTRU-WM', 40, y); doc.text('Fecha: ' + (o.fecha || ''), 420, y); y += 14;
+            doc.text('Proveedor: ' + (o.proveedor || ''), 40, y); y += 12;
+            doc.text('Proyecto: ' + (o.proyecto || ''), 40, y); y += 18;
+            doc.text('CANT  UNID  DESCRIPCIÓN  COLOR/MARCA  PRECIO U.  SUBTOTAL', 40, y); y += 14;
+            (o.items || []).forEach(it => {
+              const cantidad = Number(it.cantidad||0);
+              const precio = Number(it.precio||0);
+              const subtotal = Math.round((cantidad * precio + Number.EPSILON) * 100) / 100;
+              const line = cantidad + '  ' + (it.unidad || '') + '  ' + (it.descripcion || '') + '  ' + (it.marca || '') + '  Q ' + precio.toFixed(2) + '  Q ' + subtotal.toFixed(2);
+              doc.text(line, 40, y);
+              y += 12;
+              if (y > 740) { doc.addPage(); y = 40; }
+            });
+            y += 18; doc.text('TOTAL: Q ' + Number(o.total).toFixed(2), 40, y);
+            try {
+              const dataUrl = doc.output('datauristring');
+              o.pdfDataUrl = dataUrl;
+            } catch (outErr) {
+              console.warn('Error al generar data URL del PDF:', outErr);
+            }
+          }
+        } catch (pdfErr) { console.warn('No fue posible generar PDF de la OC:', pdfErr); }
+
+        historial.push(o);
+        localStorage.setItem('oc_history', JSON.stringify(historial));
+        wmToast('Orden guardada en historial (oc_history). El PDF (si fue generado) se almacena junto al registro.');
+      }catch(e){ console.warn('saveOrderToHistory error', e); wmToast('No fue posible guardar la orden.'); }
+    }
+  </script>
+</body>
+</html>
